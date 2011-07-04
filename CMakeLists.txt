@@ -1,11 +1,13 @@
 project(renderer)
 cmake_minimum_required(VERSION 2.8)
 
+if(APPLE)
 find_library(GL_LIBRARIES opengl HINTS /System/Library)
 find_library(GLUT_LIBRARIES glut)
-
-message(${GL_LIBRARIES})
-message(${GLUT_LIBRARIES})
+else()
+set(GL_LIBRARIES "")
+set(GLUT_LIBRARIES glut)
+endif()
 
 add_executable(renderer main.cpp display.cpp)
 
