@@ -66,7 +66,7 @@ namespace gtc
             {
                 for (int j=0; j<width_; ++j)
                 {
-                    image_[i*width_+j] = RGBA8(i%255, j%255, 0, 0.0);
+                    image_[i*width_+j] = RGBA8(i%255, j%255, 0, 0);
                 }
             }
             
