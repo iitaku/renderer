@@ -2,6 +2,7 @@
 #define DISPLAY_HPP
 
 #include <iostream>
+#include <sstream>
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -9,6 +10,9 @@
 #include <GL/glut.h>
 #endif
 
+#include <unistd.h>
+
+#include "perf_tracer.hpp"
 #include "four_element.hpp"
 
 namespace gtc
@@ -22,8 +26,17 @@ namespace gtc
             
             static void callback(void)
             {
+                PerfTracer tracer;
+                
                 F::compute();
                 F::display();
+                               
+                tracer.stop();
+                               
+                double fps = 1e3f / tracer.mean_ms();
+                std::stringstream ss;
+                ss << "Real Time Raytracing : " << fps << " fps" << std::endl;
+                glutSetWindowTitle(ss.str().c_str());
             }
 
         public:
@@ -34,7 +47,7 @@ namespace gtc
                 
                 glutInitWindowSize(width, height);
                 
-                glutCreateWindow("Renderer");
+                glutCreateWindow("Real Time Raytracing");
                 glutDisplayFunc(callback);
 
                 F::init(width, height);

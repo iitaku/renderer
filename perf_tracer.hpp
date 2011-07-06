@@ -1,19 +1,20 @@
 #ifndef PERF_TRACER_HPP
 #define PERF_TRACER_HPP
 
+#include <vector>
+
 #if WIN32
 #include <windows.h>
 #else
 #include <sys/time.h>
 #endif
 
-extern std::map<const char*, double>
+namespace gtc
+{
 
 class PerfTracer
 {
 private:
-    const char* key_
-
 #ifdef WIN32
     LARGE_INTEGER start_;
     LARGE_INTEGER stop_;
@@ -23,29 +24,17 @@ private:
 #endif
 
 public:
-    PerfTracer(const char* key)
-        : key_(key)
-    {
-#ifdef WIN32
-        QueryPerformanceCounter(&start);
-#else
-        gettimeofday(&start, NULL);
-#endif
-    }
-
-    ~PerfTracer(void)
-    {
-#ifdef WIN32
-        LARGE_INTEGER freq;
-        QueryPerformanceCounter(&stop);
-        QueryPerformanceFrequency(&freq);
-
-
-#else
-        gettimeofday(&stop, NULL);
-#endif
-    }
+    PerfTracer(bool auto_start = true);
+    ~PerfTracer(void);
     
+    void start(void);
+    void stop(void);
+    double ms(void);
+    double us(void);
+    double mean_ms(void);
+    double mean_us(void);
 };
+
+} /* namespace gtc */
 
 #endif /* PERF_TRACER_HPP */
