@@ -12,5 +12,6 @@ int DrawImage::height_ = 0;
 int DrawImage::counter_ = 0;
 GLuint DrawImage::texture_ = 0;
 RGBA8* DrawImage::image_ = NULL;
+Scene* DrawImage::scene_ = NULL;
 
 } /* namespace gtc */

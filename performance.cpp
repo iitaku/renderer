@@ -2,7 +2,7 @@
 #include <functional>
 #include <numeric>
 
-#include "perf_tracer.hpp"
+#include "performance.hpp"
 
 #define RANGE 10
 
@@ -13,7 +13,7 @@ int counter = 0;
 static double ms_result[RANGE] = {0.f};
 static double us_result[RANGE] = {0.f};
 
-PerfTracer::PerfTracer(bool auto_start)
+Performance::Performance(bool auto_start)
 {
     if (auto_start)
     {
@@ -21,14 +21,14 @@ PerfTracer::PerfTracer(bool auto_start)
     }
 }
 
-PerfTracer::~PerfTracer(void)
+Performance::~Performance(void)
 {
     counter = (counter+1) % RANGE;
     ms_result[counter] = ms();
     us_result[counter] = us();
 }
 
-void PerfTracer::start(void)
+void Performance::start(void)
 {
 #ifdef WIN32
     QueryPerformanceCounter(&start_);
@@ -37,7 +37,7 @@ void PerfTracer::start(void)
 #endif
 }
 
-void PerfTracer::stop(void)
+void Performance::stop(void)
 {
 #ifdef WIN32
     QueryPerformanceCounter(&stop_);
@@ -46,7 +46,7 @@ void PerfTracer::stop(void)
 #endif
 }
 
-double PerfTracer::ms(void)
+double Performance::ms(void)
 {
 #ifdef WIN32   
     LARGE_INTEGER freq;
@@ -57,7 +57,7 @@ double PerfTracer::ms(void)
 #endif
 }
 
-double PerfTracer::us(void)
+double Performance::us(void)
 {
 #ifdef WIN32   
     LARGE_INTEGER freq;
@@ -68,12 +68,12 @@ double PerfTracer::us(void)
 #endif
 }
 
-double PerfTracer::mean_ms(void)
+double Performance::mean_ms(void)
 {
     return std::accumulate(&ms_result[0], &ms_result[RANGE-1], 0, std::plus<double>()) / static_cast<double>(RANGE);
 }
 
-double PerfTracer::mean_us(void)
+double Performance::mean_us(void)
 {
     return std::accumulate(&us_result[0], &us_result[RANGE-1], 0, std::plus<double>()) / static_cast<double>(RANGE);
 }

@@ -12,7 +12,7 @@
 namespace gtc
 {
 
-class PerfTracer
+class Performance
 {
 private:
 #ifdef WIN32
@@ -24,8 +24,8 @@ private:
 #endif
 
 public:
-    PerfTracer(bool auto_start = true);
-    ~PerfTracer(void);
+    Performance(bool auto_start = true);
+    ~Performance(void);
     
     void start(void);
     void stop(void);

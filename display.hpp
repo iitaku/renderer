@@ -12,8 +12,9 @@
 
 #include <unistd.h>
 
-#include "perf_tracer.hpp"
+#include "performance.hpp"
 #include "four_element.hpp"
+#include "ray_trace.hpp"
 
 namespace gtc
 {
@@ -26,14 +27,14 @@ namespace gtc
             
             static void callback(void)
             {
-                PerfTracer tracer;
+                Performance perf;
                 
                 F::compute();
                 F::display();
                                
-                tracer.stop();
+                perf.stop();
                                
-                double fps = 1e3f / tracer.mean_ms();
+                double fps = 1e3f / perf.mean_ms();
                 std::stringstream ss;
                 ss << "Real Time Raytracing : " << fps << " fps" << std::endl;
                 glutSetWindowTitle(ss.str().c_str());
@@ -66,13 +67,15 @@ namespace gtc
         static int counter_;
         static GLuint texture_;
         static RGBA8* image_;
+        static Scene* scene_;
 
         static void init(int width, int height)
         {
-                       
             width_ = width;
             height_ = height;
 
+            scene_ = new Scene(width_, height_);
+            
             image_ = new RGBA8[width_*height_];
 
             for (int i=0; i<height_; ++i)
@@ -98,12 +101,11 @@ namespace gtc
 
         static void compute(void)
         {
-
             for (int i=0; i<height_; ++i)
             {
                 for (int j=0; j<width_; ++j)
                 {
-                    image_[i*width_+j] = RGBA8((counter_+i)%255, (counter_+j)%255, 0, 0.0);
+                    image_[i*width_+j] = scene_->render(i, j);
                 }
             }
                       
@@ -121,9 +123,9 @@ namespace gtc
 
             glBegin(GL_POLYGON);
             glTexCoord2f(0, 0); glVertex2f(-0.9 , -0.9);
-            glTexCoord2f(0, 1); glVertex2f(-0.9 , 0.9);
-            glTexCoord2f(1, 1); glVertex2f(0.9 , 0.9);
             glTexCoord2f(1, 0); glVertex2f(0.9 , -0.9);
+            glTexCoord2f(1, 1); glVertex2f(0.9 , 0.9);
+            glTexCoord2f(0, 1); glVertex2f(-0.9 , 0.9);
             glEnd();
 
             glutSwapBuffers();
