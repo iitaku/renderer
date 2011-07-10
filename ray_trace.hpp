@@ -11,6 +11,8 @@
 namespace gtc
 {
 
+extern bool flag;
+
 struct Intersect
 {
     bool result;
@@ -170,18 +172,18 @@ public:
     virtual RGBA8 shading(Coord * lights, unsigned int light_num,
                           Object ** objs, unsigned int obj_num,
                           const Intersect & isect) const
-    {
-        RGBA8 pixel = color_;
+    { 
+        RGBA8 pixel;
 
         for (unsigned int i=0; i<light_num; ++i)
         {
             const Coord & light = lights[i];
             
-            if (isect.normal.dot(light) <= 0.0f)
+            if (isect.normal.dot(light-isect.coord) <= 0.0f)
             {
                 return RGBA8(0, 0, 0);
             }
-
+ 
             Ray ray(light, isect.coord - light);
 
             Intersect my_isect = objs[id_]->intersect(ray);
@@ -204,6 +206,9 @@ public:
                     return RGBA8(0, 0, 0);
                 }
             }
+
+            float lambert = ray.Direction().dot(isect.normal);
+            pixel = color_ * lambert;
         }
 
         return pixel;
@@ -269,7 +274,7 @@ public:
         {
             const Coord & light = lights[i];
 
-            if (isect.normal.dot(light) <= 0.0f)
+            if (isect.normal.dot(light-isect.coord) <= 0.0f)
             {
                 return RGBA8(0, 0, 0);
             }
@@ -296,6 +301,9 @@ public:
                     return RGBA8(0, 0, 0);
                 }
             }
+
+            float lambert = ray.Direction().dot(isect.normal);
+            pixel = color_ * lambert;
         }
 
         return pixel;
@@ -325,7 +333,7 @@ public:
         screen_[2] = Coord(+5.0, +5.0, 0.0);
         screen_[3] = Coord(-5.0, +5.0, 0.0);
         
-        lights_[0] = Coord(0, 5.0, 1.0);
+        lights_[0] = Coord(0.0, 5.0, 1.0);
 
         objs_[0] = new BackGround();
         objs_[1] = new Sphere(1, RGBA8(255, 0, 0), Coord(-0.7, 0.0, -1.5), 0.7);
@@ -386,7 +394,7 @@ public:
                 }
             }
         }
-
+        
         pixel = objs_[obj_idx]->shading(&lights_[0], LIGHT_NUM, 
                                         &objs_[0], OBJECT_NUM, 
                                         isect);

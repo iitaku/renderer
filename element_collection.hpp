@@ -39,6 +39,10 @@ namespace gtc
                 return *this;
             }
 
+            T V1(void) const { return this->v1_; }
+            T V2(void) const { return this->v2_; }
+            T V3(void) const { return this->v3_; }
+
             /* add */
             ThreeElement<T> operator+(const ThreeElement<T>& rhs) const
             {
@@ -159,6 +163,11 @@ namespace gtc
                 this->v4_ = rhs.v4_;
                 return *this;
             }
+
+            T V1(void) const { return this->v1_; }
+            T V2(void) const { return this->v2_; }
+            T V3(void) const { return this->v3_; }
+            T V4(void) const { return this->v4_; }
 
             /* add */
             FourElement<T> operator+(const FourElement<T>& rhs) const

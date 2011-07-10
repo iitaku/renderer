@@ -4,6 +4,11 @@
 
 #include "display.hpp"
 
+//namespace gtc
+//{
+//    bool flag;
+//}
+
 using namespace gtc;
 
 struct ViewOnly
