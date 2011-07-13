@@ -14,4 +14,5 @@ namespace gtc
         }
 
     } /* namespace helper */
+
 } /* namespace gtc */

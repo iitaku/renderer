@@ -11,7 +11,18 @@
 namespace gtc
 {
 
-extern bool flag;
+struct Ray
+{
+    Coord origin;
+    Vector direction;
+    float strong;
+
+    Ray(void)
+        : origin(), direction(), strong(0.0f) {}
+    
+    Ray(const Coord& _origin, const Vector& _direction, float _strong)
+        : origin(_origin), direction(_direction.normalize()), strong(_strong) {}
+};
 
 struct Intersect
 {
@@ -19,48 +30,46 @@ struct Intersect
     float distance;
     Coord coord;
     Vector normal;
+    Ray ray;
     
     Intersect(void)
-        : result(false), distance(helper::make_inf()), coord(), normal() {}
+        : result(false), distance(helper::make_inf()), coord(), normal(), ray() {}
 
     Intersect(bool _result)
-        : result(_result), distance(helper::make_inf()), coord(), normal() {}
+        : result(_result), distance(helper::make_inf()), coord(), normal(), ray() {}
     
     Intersect(bool _result, float _distance)
-        : result(_result), distance(_distance), coord(), normal() {}
-
-    Intersect(bool _result, float _distance, 
-              const Coord & _coord, const Vector & _normal)
-        : result(_result), distance(_distance), coord(_coord), normal(_normal) {}
+        : result(_result), distance(_distance), coord(), normal(), ray() {}
+    
+    Intersect(bool _result, float _distance,
+              const Coord & _coord, const Vector & _normal, const Ray & _ray)
+        : result(_result), distance(_distance), coord(_coord), normal(_normal), ray(_ray) {}
 };
 
-class Ray
+struct Material
 {
-private:
-    Coord origin_;
-    Vector direction_;
+    RGBA8 color;
+    float reflection;
 
-public:
-    Ray(const Coord& origin, const Vector& direction)
-        : origin_(origin), direction_(direction.normalize()) {}
-
-    const Coord& Origin(void) const { return origin_; }
-    const Vector& Direction(void) const { return direction_; }
+    Material(void)
+        : color(), reflection(0) {}
+    
+    Material(const RGBA8 & _color, float _reflection)
+        : color(_color), reflection(_reflection) {}
 };
-
 
 class Object
 {
 protected:
     const unsigned int id_;
-    RGBA8 color_;
+    Material material_;
 
 public:    
     Object(unsigned int id)
-        : id_(id), color_() {}
+        : id_(id), material_() {}
 
-    Object(unsigned int id, const RGBA8& color)
-        : id_(id), color_(color) {}
+    Object(unsigned int id, const Material& material)
+        : id_(id), material_(material) {}
 
     virtual Intersect intersect(const Ray& ray) const = 0;
     virtual RGBA8 shading(Coord * lights, unsigned int light_num,
@@ -83,7 +92,7 @@ public:
                           Object ** objs, unsigned int obj_num,
                           const Intersect & isect) const
     {
-        return color_;
+        return material_.color;
     }
 };
 
@@ -117,19 +126,19 @@ public:
     }
 
     Triangle(unsigned int id,
-             const RGBA8 & color,
+             const Material & material,
              const Coord & v0,
              const Coord & v1, 
              const Coord & v2)
-           : Object(id, color), v0_(v0), v1_(v1), v2_(v2)
+           : Object(id, material), v0_(v0), v1_(v1), v2_(v2)
     {
         normal_ = calc_normal();
     }
 
     virtual Intersect intersect(const Ray& ray) const
     {
-        float nume = (v0_ - ray.Origin()).dot(normal_);
-        float deno = ray.Direction().dot(normal_);
+        float nume = (v0_ - ray.origin).dot(normal_);
+        float deno = ray.direction.dot(normal_);
 
         if (-0.0001f <= deno)
         {
@@ -143,7 +152,7 @@ public:
             return Intersect(false);
         }
         
-        Coord p = ray.Origin() + ray.Direction() * t;
+        Coord p = ray.origin + ray.direction * t;
         
         Vector d0p = p - v0_;
         Vector d01 = v1_ - v0_;
@@ -166,7 +175,10 @@ public:
             return Intersect(false);
         }
         
-        return Intersect(true, t, p, normal_);
+        float reflet = 2.0f * (ray.direction.dot(normal_));
+        Ray new_ray(p, ray.direction - (normal_ * reflet), ray.strong * material_.reflection);
+        
+        return Intersect(true, t, p, normal_, new_ray);
     }
 
     virtual RGBA8 shading(Coord * lights, unsigned int light_num,
@@ -184,7 +196,7 @@ public:
                 return RGBA8(0, 0, 0);
             }
  
-            Ray ray(light, isect.coord - light);
+            Ray ray(light, isect.coord - light, 1.0);
 
             Intersect my_isect = objs[id_]->intersect(ray);
 
@@ -207,8 +219,8 @@ public:
                 }
             }
 
-            float lambert = ray.Direction().dot(isect.normal);
-            pixel = color_ * lambert;
+            float lambert = ray.direction.dot(isect.normal);
+            pixel = material_.color * lambert;
         }
 
         return pixel;
@@ -231,16 +243,16 @@ public:
         : Object(id), center_(center), radius_(radius) {}
     
     Sphere(unsigned int id,
-           const RGBA8 & color,
+           const Material & material,
            const Coord & center,
            float radius)
-        : Object(id, color), center_(center), radius_(radius) {}
+        : Object(id, material), center_(center), radius_(radius) {}
 
     virtual Intersect intersect(const Ray& ray) const
     {
-        float a = ray.Direction().self_dot();
-        float b = ray.Direction().dot((ray.Origin() - center_));
-        float c = (ray.Origin() - center_).self_dot() - (radius_*radius_);
+        float a = ray.direction.self_dot();
+        float b = ray.direction.dot((ray.origin - center_));
+        float c = (ray.origin - center_).self_dot() - (radius_*radius_);
 
         float d = b * b - a * c;
 
@@ -258,17 +270,20 @@ public:
         }
 
         float t = MAX(tn, tp);
-        Coord p = ray.Origin() + ray.Direction() * t;
+        Coord p = ray.origin + ray.direction * t;
         Vector n = (p - center_).normalize();
         
-        return Intersect(true, t, p, n);
+        float reflet = 2.0f * (ray.direction.dot(n));
+        Ray new_ray(p, ray.direction - (n * reflet), ray.strong * material_.reflection);
+        
+        return Intersect(true, t, p, n, new_ray);
     }
 
     virtual RGBA8 shading(Coord * lights, unsigned int light_num,
                           Object ** objs, unsigned int obj_num,
                           const Intersect & isect) const
     {
-        RGBA8 pixel = color_;
+        RGBA8 pixel = material_.color;
 
         for (unsigned int i=0; i<light_num; ++i)
         {
@@ -279,7 +294,7 @@ public:
                 return RGBA8(0, 0, 0);
             }
 
-            Ray ray(light, isect.coord - light);
+            Ray ray(light, isect.coord - light, 1.0);
 
             Intersect my_isect = objs[id_]->intersect(ray);
 
@@ -302,8 +317,8 @@ public:
                 }
             }
 
-            float lambert = ray.Direction().dot(isect.normal);
-            pixel = color_ * lambert;
+            float lambert = ray.direction.dot(isect.normal);
+            pixel = material_.color * lambert;
         }
 
         return pixel;
@@ -334,22 +349,35 @@ public:
         screen_[3] = Coord(-5.0, +5.0, 0.0);
         
         lights_[0] = Coord(0.0, 5.0, 1.0);
-
+        
         objs_[0] = new BackGround();
-        objs_[1] = new Sphere(1, RGBA8(255, 0, 0), Coord(-0.7, 0.0, -1.5), 0.7);
-        objs_[2] = new Sphere(2, RGBA8(0, 255, 0), Coord(+0.7, 0.0, -1.5), 0.7);
-        objs_[3] = new Sphere(3, RGBA8(0, 0, 255), Coord(+0.0, 1.2, -1.5), 0.7);
+#if 0
+        objs_[1] = new Sphere(1, Material(RGBA8(255, 0, 0), 1.0), Coord(-0.7, 0.0, -1.5), 0.7);
+        objs_[2] = new Sphere(2, Material(RGBA8(0, 255, 0), 1.0), Coord(+0.7, 0.0, -1.5), 0.7);
+        objs_[3] = new Sphere(3, Material(RGBA8(0, 0, 255), 1.0), Coord(+0.0, 1.2, -1.5), 0.7);
 
-        objs_[4] = new Triangle(4, RGBA8(255, 255, 255),
-                               Coord(-2.0, -2.0, -1.0), 
-                               Coord(-2.0, -2.0, -20.0),
-                               Coord(+2.0, -2.0, -1.0));
+        objs_[4] = new Triangle(4, Material(RGBA8(255, 255, 255), 1.0),
+                                Coord(-2.0, -2.0, -1.0), 
+                                Coord(-2.0, -2.0, -20.0),
+                                Coord(+2.0, -2.0, -1.0));
 
-        objs_[5] = new Triangle(5, RGBA8(255, 255, 255),
-                               Coord(-2.0, -2.0, -20.0), 
-                               Coord(+2.0, -2.0, -20.0),
-                               Coord(+2.0, -2.0, -1.0));
-
+        objs_[5] = new Triangle(5, Material(RGBA8(255, 255, 255), 1.0),
+                                Coord(-2.0, -2.0, -20.0), 
+                                Coord(+2.0, -2.0, -20.0),
+                                Coord(+2.0, -2.0, -1.0));
+#else
+        objs_[1] = new Triangle(1, Material(RGBA8(255, 255, 255), 1.0), 
+                                Coord(-10.0, -10.0, -1.0),
+                                Coord(+10.0, -10.0, -1.0),
+                                Coord(+10.0, +10.0, -1.0));
+        objs_[2] = new Triangle(2, Material(RGBA8(255, 255, 255), 1.0), 
+                                Coord(-10.0, -10.0, -1.0),
+                                Coord(-10.0, +10.0, -1.0),
+                                Coord(+10.0, +10.0, -1.0));
+        objs_[3] = NULL;
+        objs_[4] = NULL;
+        objs_[5] = NULL;
+#endif
     }
 
     ~Scene()
@@ -368,36 +396,43 @@ public:
                   0.0);
 
         Vector direction = screen_coord - view_point_;
-        Ray ray(view_point_, direction);
-        Intersect isect;
+        Ray ray(view_point_, direction, 1.0);
+        Intersect isect[REFLECT_NUM];
 
         unsigned int obj_idx = 0;
         RGBA8 pixel;
-        
-        for (unsigned int i=1; i<OBJECT_NUM; ++i)
-        {
-            Intersect tmp_isect;
-            
-            if (NULL == objs_[i])
-            {
-                continue;
-            }
-            
-            tmp_isect = objs_[i]->intersect(ray);
+       
+        unsigned int reflect_count = 0;
 
-            if (tmp_isect.result)
+        //do {
+            for (unsigned int i=1; i<OBJECT_NUM; ++i)
             {
-                if (tmp_isect.distance < isect.distance)
+                Intersect tmp_isect;
+
+                if (NULL == objs_[i])
                 {
-                    isect = tmp_isect;
-                    obj_idx = i;
+                    continue;
+                }
+
+                tmp_isect = objs_[i]->intersect(ray);
+
+                if (tmp_isect.result)
+                {
+                    if (tmp_isect.distance < isect[reflect_count].distance)
+                    {
+                        isect[reflect_count] = tmp_isect;
+                        obj_idx = i;
+                    }
                 }
             }
-        }
+            
+            reflect_count++;
+        
+        //} while (0.0f < isect[reflect_count].ray.strong && reflect_count < REFLECT_NUM);
         
         pixel = objs_[obj_idx]->shading(&lights_[0], LIGHT_NUM, 
                                         &objs_[0], OBJECT_NUM, 
-                                        isect);
+                                        isect[0]);
 
         return pixel;
     }
