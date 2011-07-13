@@ -36,12 +36,13 @@ namespace gtc
                 : v1_(other.v1_), v2_(other.v2_), v3_(other.v3_)
             {} 
 
+            template<typename S>
             FUNC_DECL
-            ThreeElement<T>& operator=(const ThreeElement<T>& rhs) 
+            ThreeElement<T>& operator=(const ThreeElement<S>& rhs) 
             {
-                this->v1_ = rhs.v1_;
-                this->v2_ = rhs.v2_;
-                this->v3_ = rhs.v3_;
+                this->v1_ = static_cast<S>(rhs.V1());
+                this->v2_ = static_cast<S>(rhs.V2());
+                this->v3_ = static_cast<S>(rhs.V3());
                 return *this;
             }
 
@@ -178,13 +179,14 @@ namespace gtc
                 : v1_(other.v1_), v2_(other.v2_), v3_(other.v3_), v4_(other.v4_)
             {} 
 
+            template<typename S>
             FUNC_DECL
-            FourElement<T>& operator=(const FourElement<T>& rhs) 
+            FourElement<T>& operator=(const FourElement<S>& rhs) 
             {
-                this->v1_ = rhs.v1_;
-                this->v2_ = rhs.v2_;
-                this->v3_ = rhs.v3_;
-                this->v4_ = rhs.v4_;
+                this->v1_ = static_cast<T>(rhs.V1());
+                this->v2_ = static_cast<T>(rhs.V2());
+                this->v3_ = static_cast<T>(rhs.V3());
+                this->v4_ = static_cast<T>(rhs.V4());
                 return *this;
             }
 
@@ -294,7 +296,10 @@ namespace gtc
 
     typedef ThreeElement<float> Coord;
     typedef ThreeElement<float> Vector;
-    typedef FourElement<unsigned char> RGBA8;
+    typedef FourElement<unsigned char> RGBA8U;
+    typedef FourElement<unsigned short> RGBA16U;
+    typedef FourElement<float> RGBA32F;
+    typedef FourElement<double> RGBA64F;
 
 } /* namespace gtc */
 

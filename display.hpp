@@ -105,7 +105,7 @@ namespace gtc
     }
 
     __global__
-    static void render_kernel(Scene ** d_scene_p, RGBA8 * d_image, int width, int height)
+    static void render_kernel(Scene ** d_scene_p, RGBA8U * d_image, int width, int height)
     {
         int x = blockDim.x * blockIdx.x + threadIdx.x;
         int y = blockDim.y * blockIdx.y + threadIdx.y;
@@ -127,11 +127,11 @@ namespace gtc
         static int height_;
         static int counter_;
         static GLuint texture_;
-        static RGBA8 * image_;
+        static RGBA8U * image_;
         static Scene * scene_;
 
 #ifdef USE_CUDA
-        static RGBA8 * d_image_;
+        static RGBA8U * d_image_;
         static Scene ** d_scene_p_;
 #endif
 
@@ -142,15 +142,15 @@ namespace gtc
 
             scene_ = new Scene(width_, height_);
             
-            image_ = new RGBA8[width_*height_];
-            memset(image_, 0, width_*height_*sizeof(RGBA8));
+            image_ = new RGBA8U[width_*height_];
+            memset(image_, 0, width_*height_*sizeof(RGBA8U));
 
 #ifdef USE_CUDA
             cudaMalloc(&d_scene_p_, sizeof(Scene*));
             new_kernel<<<1, 1>>>(d_scene_p_, width_, height_);
 
-            cudaMalloc(&d_image_, width_*height_*sizeof(RGBA8));
-            cudaMemset(d_image_, 0, width_*height_*sizeof(RGBA8));
+            cudaMalloc(&d_image_, width_*height_*sizeof(RGBA8U));
+            cudaMemset(d_image_, 0, width_*height_*sizeof(RGBA8U));
 #endif 
             
             glEnable(GL_TEXTURE_2D);
@@ -194,7 +194,7 @@ namespace gtc
 
             Performance perf_transfer("transfer");
             
-            cudaMemcpy(image_, d_image_, width_*height_*sizeof(RGBA8), cudaMemcpyDeviceToHost);
+            cudaMemcpy(image_, d_image_, width_*height_*sizeof(RGBA8U), cudaMemcpyDeviceToHost);
             
             perf_transfer.stop();
 #else
@@ -266,11 +266,11 @@ namespace gtc
     int DrawImage::height_ = 0;
     int DrawImage::counter_ = 0;
     GLuint DrawImage::texture_ = 0;
-    RGBA8 * DrawImage::image_ = NULL;
+    RGBA8U * DrawImage::image_ = NULL;
     Scene * DrawImage::scene_ = NULL;
 
 #ifdef USE_CUDA
-    RGBA8 * DrawImage::d_image_ = NULL;
+    RGBA8U * DrawImage::d_image_ = NULL;
     Scene ** DrawImage::d_scene_p_ = NULL;
 #endif
 

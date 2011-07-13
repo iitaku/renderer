@@ -12,6 +12,8 @@
 namespace gtc
 {
 
+typedef RGBA8U RGBA;
+
 static int deb_x;
 static int deb_y;
 
@@ -61,7 +63,7 @@ struct Intersect
 
 struct Material
 {
-    RGBA8 color;
+    RGBA color;
     float reflection;
 
     FUNC_DECL
@@ -69,7 +71,7 @@ struct Material
         : color(), reflection(0) {}
     
     FUNC_DECL
-    Material(const RGBA8 & _color, float _reflection)
+    Material(const RGBA & _color, float _reflection)
         : color(_color), reflection(_reflection) {}
 };
 
@@ -78,22 +80,22 @@ class Object
 protected:
     const unsigned int id_;
     Material material_;
-    const RGBA8 unvisible_color_;
+    const RGBA unvisible_color_;
 
 public:    
     FUNC_DECL
     Object(unsigned int id)
-        : id_(id), material_(), unvisible_color_(RGBA8(0, 0, 0)) {}
+        : id_(id), material_(), unvisible_color_(RGBA(0, 0, 0)) {}
 
     FUNC_DECL
     Object(unsigned int id, const Material& material)
-        : id_(id), material_(material), unvisible_color_(RGBA8(0, 0, 0)) {}
+        : id_(id), material_(material), unvisible_color_(RGBA(0, 0, 0)) {}
 
     FUNC_DECL 
     virtual Intersect intersect(const Ray& ray) const = 0;
     
     FUNC_DECL 
-    virtual RGBA8 shading(Coord * lights, unsigned int light_num,
+    virtual RGBA shading(Coord * lights, unsigned int light_num,
                           Object ** objs, unsigned int obj_num,
                           const Intersect & isect) const = 0;
 };
@@ -112,7 +114,7 @@ public:
     }
     
     FUNC_DECL 
-    virtual RGBA8 shading(Coord * lights, unsigned int light_num,
+    virtual RGBA shading(Coord * lights, unsigned int light_num,
                           Object ** objs, unsigned int obj_num,
                           const Intersect & isect) const
     {
@@ -214,11 +216,11 @@ public:
 #ifdef USE_CUDA
     __device__
 #endif
-    virtual RGBA8 shading(Coord * lights, unsigned int light_num,
+    virtual RGBA shading(Coord * lights, unsigned int light_num,
                           Object ** objs, unsigned int obj_num,
                           const Intersect & isect) const
     { 
-        RGBA8 pixel;
+        RGBA pixel;
 
         for (unsigned int i=0; i<light_num; ++i)
         {
@@ -317,11 +319,11 @@ public:
     }
     
     FUNC_DECL 
-    virtual RGBA8 shading(Coord * lights, unsigned int light_num,
-                          Object ** objs, unsigned int obj_num,
-                          const Intersect & isect) const
+    virtual RGBA shading(Coord * lights, unsigned int light_num,
+                         Object ** objs, unsigned int obj_num,
+                         const Intersect & isect) const
     {
-        RGBA8 pixel = material_.color;
+        RGBA pixel = material_.color;
 
         for (unsigned int i=0; i<light_num; ++i)
         {
@@ -392,25 +394,25 @@ public:
         
         objs_[0] = new BackGround();
 #if 1
-        objs_[1] = new Sphere(1, Material(RGBA8(255, 0, 0), 0.5), Coord(-0.7, 0.0, -1.5), 0.7);
-        objs_[2] = new Sphere(2, Material(RGBA8(0, 255, 0), 0.5), Coord(+0.7, 0.0, -1.5), 0.7);
-        objs_[3] = new Sphere(3, Material(RGBA8(0, 0, 255), 0.5), Coord(+0.0, 1.2, -1.5), 0.7);
+        objs_[1] = new Sphere(1, Material(RGBA(255, 0, 0), 0.5), Coord(-0.7, 0.0, -1.5), 0.7);
+        objs_[2] = new Sphere(2, Material(RGBA(0, 255, 0), 0.5), Coord(+0.7, 0.0, -1.5), 0.7);
+        objs_[3] = new Sphere(3, Material(RGBA(0, 0, 255), 0.5), Coord(+0.0, 1.2, -1.5), 0.7);
 
-        objs_[4] = new Triangle(4, Material(RGBA8(255, 255, 255), 1.0),
+        objs_[4] = new Triangle(4, Material(RGBA(255, 255, 255), 1.0),
                                 Coord(-2.0, -2.0, -1.0), 
                                 Coord(-2.0, -2.0, -20.0),
                                 Coord(+2.0, -2.0, -1.0));
 
-        objs_[5] = new Triangle(5, Material(RGBA8(255, 255, 255), 1.0),
+        objs_[5] = new Triangle(5, Material(RGBA(255, 255, 255), 1.0),
                                 Coord(-2.0, -2.0, -20.0), 
                                 Coord(+2.0, -2.0, -20.0),
                                 Coord(+2.0, -2.0, -1.0));
 #else
-        objs_[1] = new Triangle(1, Material(RGBA8(255, 255, 255), 1.0), 
+        objs_[1] = new Triangle(1, Material(RGBA(255, 255, 255), 1.0), 
                                 Coord(-10.0, -10.0, -1.0),
                                 Coord(+10.0, -10.0, -1.0),
                                 Coord(+10.0, +10.0, -1.0));
-        objs_[2] = new Triangle(2, Material(RGBA8(255, 255, 255), 1.0), 
+        objs_[2] = new Triangle(2, Material(RGBA(255, 255, 255), 1.0), 
                                 Coord(-10.0, -10.0, -1.0),
                                 Coord(-10.0, +10.0, -1.0),
                                 Coord(+10.0, +10.0, -1.0));
@@ -431,8 +433,9 @@ public:
     }
 
     FUNC_DECL
-    RGBA8 render(int x, int y)
+    RGBA8U render(int x, int y)
     {
+
 #ifndef USE_CUDA        
         deb_x = x;
         deb_y = y;
@@ -448,11 +451,12 @@ public:
         Intersect isect[REFLECT_NUM];
 
         unsigned int obj_idx = 0;
-        RGBA8 pixel;
+        RGBA8U pixel;
        
         unsigned int reflect_count = 0;
 
-        // do {
+        do
+        {
             for (unsigned int i=1; i<OBJECT_NUM; ++i)
             {
                 Intersect tmp_isect;
@@ -473,10 +477,10 @@ public:
                     }
                 }
             }
-            
+
             reflect_count++;
-        
-        //} while (0.0f < isect[reflect_count].ray.strong && reflect_count < REFLECT_NUM);
+
+        } while (0.0f < isect[reflect_count-1].ray.strong && reflect_count < REFLECT_NUM);
         
         pixel = objs_[obj_idx]->shading(&lights_[0], LIGHT_NUM, 
                                         &objs_[0], OBJECT_NUM, 
