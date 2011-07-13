@@ -3,6 +3,7 @@
 
 #include "element_collection.hpp"
 #include "helper.hpp"
+#include "porting.hpp"
 
 #define LIGHT_NUM (1)
 #define OBJECT_NUM (1+5)
@@ -11,15 +12,20 @@
 namespace gtc
 {
 
+static int deb_x;
+static int deb_y;
+
 struct Ray
 {
     Coord origin;
     Vector direction;
     float strong;
 
+    FUNC_DECL
     Ray(void)
         : origin(), direction(), strong(0.0f) {}
     
+    FUNC_DECL
     Ray(const Coord& _origin, const Vector& _direction, float _strong)
         : origin(_origin), direction(_direction.normalize()), strong(_strong) {}
 };
@@ -31,20 +37,26 @@ struct Intersect
     Coord coord;
     Vector normal;
     Ray ray;
-    Object ray;
+    const void * obj;
     
+    FUNC_DECL
     Intersect(void)
-        : result(false), distance(helper::make_inf()), coord(), normal(), ray() {}
+        : result(false), distance(helper::make_inf()), coord(), normal(), ray(), obj(NULL) {}
 
+    FUNC_DECL
     Intersect(bool _result)
-        : result(_result), distance(helper::make_inf()), coord(), normal(), ray() {}
+        : result(_result), distance(helper::make_inf()), coord(), normal(), ray(), obj(NULL) {}
     
+    FUNC_DECL
     Intersect(bool _result, float _distance)
-        : result(_result), distance(_distance), coord(), normal(), ray() {}
+        : result(_result), distance(_distance), coord(), normal(), ray(), obj(NULL) {}
     
+    FUNC_DECL
     Intersect(bool _result, float _distance,
-              const Coord & _coord, const Vector & _normal, const Ray & _ray)
-        : result(_result), distance(_distance), coord(_coord), normal(_normal), ray(_ray) {}
+              const Coord & _coord, const Vector & _normal, const Ray & _ray, const void * _obj)
+        : result(_result), distance(_distance), coord(_coord), normal(_normal), ray(_ray), obj(_obj) {}
+        //      const Coord & _coord, const Vector & _normal, const Ray & _ray, const Object * _obj)
+        //: result(_result), distance(_distance), coord(_coord), normal(_normal), ray(_ray), obj(_obj) {}
 };
 
 struct Material
@@ -52,9 +64,11 @@ struct Material
     RGBA8 color;
     float reflection;
 
+    FUNC_DECL
     Material(void)
         : color(), reflection(0) {}
     
+    FUNC_DECL
     Material(const RGBA8 & _color, float _reflection)
         : color(_color), reflection(_reflection) {}
 };
@@ -64,15 +78,21 @@ class Object
 protected:
     const unsigned int id_;
     Material material_;
+    const RGBA8 unvisible_color_;
 
 public:    
+    FUNC_DECL
     Object(unsigned int id)
-        : id_(id), material_() {}
+        : id_(id), material_(), unvisible_color_(RGBA8(0, 0, 0)) {}
 
+    FUNC_DECL
     Object(unsigned int id, const Material& material)
-        : id_(id), material_(material) {}
+        : id_(id), material_(material), unvisible_color_(RGBA8(0, 0, 0)) {}
 
+    FUNC_DECL 
     virtual Intersect intersect(const Ray& ray) const = 0;
+    
+    FUNC_DECL 
     virtual RGBA8 shading(Coord * lights, unsigned int light_num,
                           Object ** objs, unsigned int obj_num,
                           const Intersect & isect) const = 0;
@@ -81,14 +101,17 @@ public:
 class BackGround : public Object
 {
 public:
+    FUNC_DECL
     BackGround()
         : Object(0) {}
     
+    FUNC_DECL 
     virtual Intersect intersect(const Ray& ray) const
     {
         return Intersect(false);
     }
     
+    FUNC_DECL 
     virtual RGBA8 shading(Coord * lights, unsigned int light_num,
                           Object ** objs, unsigned int obj_num,
                           const Intersect & isect) const
@@ -106,6 +129,7 @@ private:
 
     Vector normal_;
 
+    FUNC_DECL
     Vector calc_normal()
     {
         Vector v01 = v1_-v0_;
@@ -114,9 +138,11 @@ private:
     }
 
 public:
+    FUNC_DECL
     Triangle(unsigned int id)
         : Object(id), v0_(), v1_(), v2_() {}
 
+    FUNC_DECL
     Triangle(unsigned int id,
              const Coord & v0,
              const Coord & v1, 
@@ -126,6 +152,7 @@ public:
         normal_ = calc_normal();
     }
 
+    FUNC_DECL
     Triangle(unsigned int id,
              const Material & material,
              const Coord & v0,
@@ -135,7 +162,8 @@ public:
     {
         normal_ = calc_normal();
     }
-
+    
+    FUNC_DECL 
     virtual Intersect intersect(const Ray& ray) const
     {
         float nume = (v0_ - ray.origin).dot(normal_);
@@ -179,9 +207,13 @@ public:
         float reflet = 2.0f * (ray.direction.dot(normal_));
         Ray new_ray(p, ray.direction - (normal_ * reflet), ray.strong * material_.reflection);
         
-        return Intersect(true, t, p, normal_, new_ray);
+        return Intersect(true, t, p, normal_, new_ray, this);
     }
 
+    //FUNC_DECL 
+#ifdef USE_CUDA
+    __device__
+#endif
     virtual RGBA8 shading(Coord * lights, unsigned int light_num,
                           Object ** objs, unsigned int obj_num,
                           const Intersect & isect) const
@@ -194,7 +226,7 @@ public:
             
             if (isect.normal.dot(light-isect.coord) <= 0.0f)
             {
-                return RGBA8(0, 0, 0);
+                return Object::unvisible_color_;
             }
  
             Ray ray(light, isect.coord - light, 1.0);
@@ -216,11 +248,11 @@ public:
                 if (other_isect.result && 
                     other_isect.distance < my_isect.distance)
                 {
-                    return RGBA8(0, 0, 0);
+                    return Object::unvisible_color_;
                 }
             }
-
-            float lambert = ray.direction.dot(isect.normal);
+            
+            float lambert = fabs(ray.direction.dot(isect.normal));
             pixel = material_.color * lambert;
         }
 
@@ -235,20 +267,24 @@ private:
     float radius_;
 
 public:
+    FUNC_DECL
     Sphere(unsigned int id)
         : Object(id), center_(), radius_(0) {}
     
+    FUNC_DECL
     Sphere(unsigned int id,
            const Coord & center,
            float radius)
         : Object(id), center_(center), radius_(radius) {}
     
+    FUNC_DECL
     Sphere(unsigned int id,
            const Material & material,
            const Coord & center,
            float radius)
         : Object(id, material), center_(center), radius_(radius) {}
 
+    FUNC_DECL
     virtual Intersect intersect(const Ray& ray) const
     {
         float a = ray.direction.self_dot();
@@ -277,9 +313,10 @@ public:
         float reflet = 2.0f * (ray.direction.dot(n));
         Ray new_ray(p, ray.direction - (n * reflet), ray.strong * material_.reflection);
         
-        return Intersect(true, t, p, n, new_ray);
+        return Intersect(true, t, p, n, new_ray, this);
     }
-
+    
+    FUNC_DECL 
     virtual RGBA8 shading(Coord * lights, unsigned int light_num,
                           Object ** objs, unsigned int obj_num,
                           const Intersect & isect) const
@@ -292,7 +329,7 @@ public:
 
             if (isect.normal.dot(light-isect.coord) <= 0.0f)
             {
-                return RGBA8(0, 0, 0);
+                return Object::unvisible_color_;
             }
 
             Ray ray(light, isect.coord - light, 1.0);
@@ -314,11 +351,11 @@ public:
                 if (other_isect.result && 
                     other_isect.distance < my_isect.distance)
                 {
-                    return RGBA8(0, 0, 0);
+                    return Object::unvisible_color_;
                 }
             }
 
-            float lambert = ray.direction.dot(isect.normal);
+            float lambert = fabs(ray.direction.dot(isect.normal));
             pixel = material_.color * lambert;
         }
 
@@ -337,9 +374,11 @@ private:
     
     Coord lights_[LIGHT_NUM];
 
-    Object* objs_[OBJECT_NUM];
+    Object * objs_[OBJECT_NUM];
    
 public:
+    
+    FUNC_DECL
     Scene(int width, int height)
         : width_(width), height_(height), 
           view_point_(0, 0, 1.0)
@@ -353,9 +392,9 @@ public:
         
         objs_[0] = new BackGround();
 #if 1
-        objs_[1] = new Sphere(1, Material(RGBA8(255, 0, 0), 1.0), Coord(-0.7, 0.0, -1.5), 0.7);
-        objs_[2] = new Sphere(2, Material(RGBA8(0, 255, 0), 1.0), Coord(+0.7, 0.0, -1.5), 0.7);
-        objs_[3] = new Sphere(3, Material(RGBA8(0, 0, 255), 1.0), Coord(+0.0, 1.2, -1.5), 0.7);
+        objs_[1] = new Sphere(1, Material(RGBA8(255, 0, 0), 0.5), Coord(-0.7, 0.0, -1.5), 0.7);
+        objs_[2] = new Sphere(2, Material(RGBA8(0, 255, 0), 0.5), Coord(+0.7, 0.0, -1.5), 0.7);
+        objs_[3] = new Sphere(3, Material(RGBA8(0, 0, 255), 0.5), Coord(+0.0, 1.2, -1.5), 0.7);
 
         objs_[4] = new Triangle(4, Material(RGBA8(255, 255, 255), 1.0),
                                 Coord(-2.0, -2.0, -1.0), 
@@ -379,8 +418,10 @@ public:
         objs_[4] = NULL;
         objs_[5] = NULL;
 #endif
+    
     }
 
+    FUNC_DECL
     ~Scene()
     {
         for (int i=0; i<OBJECT_NUM; ++i)
@@ -389,8 +430,14 @@ public:
         }
     }
 
+    FUNC_DECL
     RGBA8 render(int x, int y)
     {
+#ifndef USE_CUDA        
+        deb_x = x;
+        deb_y = y;
+#endif
+
         Coord screen_coord = 
             Coord(static_cast<float>(x-(width_/2))/static_cast<float>(width_/2),
                   static_cast<float>(y-(height_/2))/static_cast<float>(height_/2),
@@ -405,7 +452,7 @@ public:
        
         unsigned int reflect_count = 0;
 
-        do {
+        // do {
             for (unsigned int i=1; i<OBJECT_NUM; ++i)
             {
                 Intersect tmp_isect;
@@ -429,15 +476,16 @@ public:
             
             reflect_count++;
         
-        } while (0.0f < isect[reflect_count].ray.strong && reflect_count < REFLECT_NUM);
+        //} while (0.0f < isect[reflect_count].ray.strong && reflect_count < REFLECT_NUM);
         
         pixel = objs_[obj_idx]->shading(&lights_[0], LIGHT_NUM, 
                                         &objs_[0], OBJECT_NUM, 
-                                        &isect[0], reflect_count);
+                                        isect[0]);
 
         return pixel;
     }
 
+    FUNC_DECL
     void displace_view(const Vector& displacement)
     {
         view_point_ = view_point_ + displacement;

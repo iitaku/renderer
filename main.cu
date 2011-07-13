@@ -22,13 +22,13 @@ int main(int argc, char* argv[])
             }
         }
     }
-
+ 
     if (0 != (width % 16) || 0 != (height % 16))
     {
         std::cerr << "window size must be multiples of 16" << std::endl;
         return -1;
     }
-       
+      
     Display<DrawImage> display(argc, argv, width, height);
     display.loop();
 
