@@ -31,6 +31,7 @@ struct Intersect
     Coord coord;
     Vector normal;
     Ray ray;
+    Object ray;
     
     Intersect(void)
         : result(false), distance(helper::make_inf()), coord(), normal(), ray() {}
@@ -351,7 +352,7 @@ public:
         lights_[0] = Coord(0.0, 5.0, 1.0);
         
         objs_[0] = new BackGround();
-#if 0
+#if 1
         objs_[1] = new Sphere(1, Material(RGBA8(255, 0, 0), 1.0), Coord(-0.7, 0.0, -1.5), 0.7);
         objs_[2] = new Sphere(2, Material(RGBA8(0, 255, 0), 1.0), Coord(+0.7, 0.0, -1.5), 0.7);
         objs_[3] = new Sphere(3, Material(RGBA8(0, 0, 255), 1.0), Coord(+0.0, 1.2, -1.5), 0.7);
@@ -404,7 +405,7 @@ public:
        
         unsigned int reflect_count = 0;
 
-        //do {
+        do {
             for (unsigned int i=1; i<OBJECT_NUM; ++i)
             {
                 Intersect tmp_isect;
@@ -428,11 +429,11 @@ public:
             
             reflect_count++;
         
-        //} while (0.0f < isect[reflect_count].ray.strong && reflect_count < REFLECT_NUM);
+        } while (0.0f < isect[reflect_count].ray.strong && reflect_count < REFLECT_NUM);
         
         pixel = objs_[obj_idx]->shading(&lights_[0], LIGHT_NUM, 
                                         &objs_[0], OBJECT_NUM, 
-                                        isect[0]);
+                                        &isect[0], reflect_count);
 
         return pixel;
     }
