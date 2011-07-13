@@ -19,7 +19,12 @@ namespace gtc
         FUNC_DECL
         static float make_max(void)
         {
-            return 0.0;
+            union {
+                float f;
+                unsigned int i;
+            } u;
+            u.i = 0x7f7fffff;
+            return u.f;
         }
 
     } /* namespace helper */

@@ -30,6 +30,21 @@ struct Ray
     FUNC_DECL
     Ray(const Coord& _origin, const Vector& _direction, float _strong)
         : origin(_origin), direction(_direction.normalize()), strong(_strong) {}
+
+    FUNC_DECL
+    bool operator==(const Ray & rhs)
+    {
+        if (this->origin == rhs.origin &&
+            this->direction == rhs.direction &&
+            this->strong == rhs.strong)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 };
 
 struct Intersect
@@ -59,6 +74,24 @@ struct Intersect
         : result(_result), distance(_distance), coord(_coord), normal(_normal), ray(_ray), obj(_obj) {}
         //      const Coord & _coord, const Vector & _normal, const Ray & _ray, const Object * _obj)
         //: result(_result), distance(_distance), coord(_coord), normal(_normal), ray(_ray), obj(_obj) {}
+
+    FUNC_DECL
+    bool operator==(const Intersect & rhs)
+    {
+        if (this->result == rhs.result && 
+            this->distance == rhs.distance &&
+            this->coord == rhs.coord &&
+            this->normal == rhs.normal &&
+            this->ray == rhs.ray &&
+            this->obj == rhs.obj )
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 };
 
 struct Material
@@ -80,16 +113,16 @@ class Object
 protected:
     const unsigned int id_;
     Material material_;
-    const RGBA unvisible_color_;
+    const RGBA invisible_color_;
 
 public:    
     FUNC_DECL
     Object(unsigned int id)
-        : id_(id), material_(), unvisible_color_(RGBA(0, 0, 0)) {}
+        : id_(id), material_(), invisible_color_(RGBA(0, 0, 0)) {}
 
     FUNC_DECL
     Object(unsigned int id, const Material& material)
-        : id_(id), material_(material), unvisible_color_(RGBA(0, 0, 0)) {}
+        : id_(id), material_(material), invisible_color_(RGBA(0, 0, 0)) {}
 
     FUNC_DECL 
     virtual Intersect intersect(const Ray& ray) const = 0;
@@ -226,7 +259,7 @@ public:
             
             if (isect.normal.dot(light-isect.coord) <= 0.0f)
             {
-                return Object::unvisible_color_;
+                return Object::invisible_color_;
             }
  
             Ray ray(light, isect.coord - light, 1.0);
@@ -248,7 +281,7 @@ public:
                 if (other_isect.result && 
                     other_isect.distance < my_isect.distance)
                 {
-                    return Object::unvisible_color_;
+                    return Object::invisible_color_;
                 }
             }
             
@@ -329,7 +362,7 @@ public:
 
             if (isect.normal.dot(light-isect.coord) <= 0.0f)
             {
-                return Object::unvisible_color_;
+                return Object::invisible_color_;
             }
 
             Ray ray(light, isect.coord - light, 1.0);
@@ -351,7 +384,7 @@ public:
                 if (other_isect.result && 
                     other_isect.distance < my_isect.distance)
                 {
-                    return Object::unvisible_color_;
+                    return Object::invisible_color_;
                 }
             }
 
@@ -391,7 +424,7 @@ public:
         lights_[0] = Coord(0.0, 5.0, 1.0);
         
         objs_[0] = new BackGround();
-#if 1
+#if 0
         objs_[1] = new Sphere(1, Material(RGBA(255, 0, 0), 0.5), Coord(-0.7, 0.0, -1.5), 0.7);
         objs_[2] = new Sphere(2, Material(RGBA(0, 255, 0), 0.5), Coord(+0.7, 0.0, -1.5), 0.7);
         objs_[3] = new Sphere(3, Material(RGBA(0, 0, 255), 0.5), Coord(+0.0, 1.2, -1.5), 0.7);
@@ -407,13 +440,13 @@ public:
                                 Coord(+2.0, -2.0, -1.0));
 #else
         objs_[1] = new Triangle(1, Material(RGBA(255, 255, 255), 1.0), 
-                                Coord(-10.0, -10.0, -1.0),
-                                Coord(+10.0, -10.0, -1.0),
-                                Coord(+10.0, +10.0, -1.0));
+                                Coord(-20.0, -20.0, -1.0),
+                                Coord(+20.0, -20.0, -1.0),
+                                Coord(+20.0, +20.0, -1.0));
         objs_[2] = new Triangle(2, Material(RGBA(255, 255, 255), 1.0), 
-                                Coord(-10.0, -10.0, -1.0),
-                                Coord(-10.0, +10.0, -1.0),
-                                Coord(+10.0, +10.0, -1.0));
+                                Coord(-20.0, -20.0, -1.0),
+                                Coord(-20.0, +20.0, -1.0),
+                                Coord(+20.0, +20.0, -1.0));
         objs_[3] = NULL;
         objs_[4] = NULL;
         objs_[5] = NULL;
@@ -447,7 +480,6 @@ public:
         Vector direction = screen_coord - view_point_;
         Ray ray(view_point_, direction, 1.0);
         Intersect isects[REFLECT_NUM];
-        Intersect isect_back;
 
         unsigned int obj_idx = 0;
         RGBA8U pixel;
@@ -471,22 +503,12 @@ public:
                 {
                     if (isect.distance < isects[reflect_count].distance)
                     {
-                        if (0 ==reflect_count)
-                        {
-                            isects[reflect_count] = isect;
-                        }
-                        
+                        isects[reflect_count] = isect;
                         obj_idx = i;
                     }
                 }
             }
-
-            //if (0 == reflect_count)
-            //{
-            //    isect_back = isects[0];
-            //}
-            //
-            /* なんかこれバグってる？？ */
+            
             ray = isects[reflect_count].ray;
             
             reflect_count++;
@@ -494,8 +516,6 @@ public:
         } while (false != isects[reflect_count-1].result && 
                  0.0f < isects[reflect_count-1].ray.strong 
                  && reflect_count < REFLECT_NUM);
-
-        assert(isect_back == isects[0]);
         
         pixel = objs_[obj_idx]->shading(&lights_[0], LIGHT_NUM, 
                                         &objs_[0], OBJECT_NUM, 

@@ -53,6 +53,22 @@ namespace gtc
             FUNC_DECL
             T V3(void) const { return this->v3_; }
 
+            /* compare */
+            FUNC_DECL
+            bool operator==(const ThreeElement<T> & rhs) const
+            {
+                if (this->v1_ == rhs.v1_ &&
+                    this->v2_ == rhs.v2_ &&
+                    this->v3_ == rhs.v3_ )
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            
             /* add */
             FUNC_DECL
             ThreeElement<T> operator+(const ThreeElement<T>& rhs) const
@@ -198,6 +214,23 @@ namespace gtc
             T V3(void) const { return this->v3_; }
             FUNC_DECL
             T V4(void) const { return this->v4_; }
+
+            /* compare */
+            FUNC_DECL
+            bool operator==(const FourElement<T> & rhs) const
+            {
+                if (this->v1_ == rhs.v1_ &&
+                    this->v2_ == rhs.v2_ &&
+                    this->v3_ == rhs.v3_ &&
+                    this->v4_ == rhs.v4_ )
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
 
             /* add */
             FUNC_DECL
