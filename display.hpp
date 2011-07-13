@@ -168,7 +168,7 @@ namespace gtc
 
         static void finish(void)
         {
-            delete image_;
+            delete [] image_;
             delete scene_;
 
 #ifdef USE_CUDA
@@ -249,6 +249,10 @@ namespace gtc
                     break;
                 case 'L':
                     std::cout << x << ":" << y << std::endl;
+                    break;
+                case 'q':
+                    finish();
+                    exit(0);
                     break;
 
                 default:

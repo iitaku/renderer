@@ -110,7 +110,8 @@ public:
     FUNC_DECL 
     virtual Intersect intersect(const Ray& ray) const
     {
-        return Intersect(false);
+        /* make_max 実装する*/
+        return Intersect(true, helper::make_max());
     }
     
     FUNC_DECL 
@@ -212,10 +213,7 @@ public:
         return Intersect(true, t, p, normal_, new_ray, this);
     }
 
-    //FUNC_DECL 
-#ifdef USE_CUDA
-    __device__
-#endif
+    FUNC_DECL 
     virtual RGBA shading(Coord * lights, unsigned int light_num,
                           Object ** objs, unsigned int obj_num,
                           const Intersect & isect) const
@@ -448,7 +446,8 @@ public:
 
         Vector direction = screen_coord - view_point_;
         Ray ray(view_point_, direction, 1.0);
-        Intersect isect[REFLECT_NUM];
+        Intersect isects[REFLECT_NUM];
+        Intersect isect_back;
 
         unsigned int obj_idx = 0;
         RGBA8U pixel;
@@ -459,32 +458,48 @@ public:
         {
             for (unsigned int i=1; i<OBJECT_NUM; ++i)
             {
-                Intersect tmp_isect;
+                Intersect isect;
 
                 if (NULL == objs_[i])
                 {
                     continue;
                 }
 
-                tmp_isect = objs_[i]->intersect(ray);
-
-                if (tmp_isect.result)
+                isect = objs_[i]->intersect(ray);
+                
+                if (isect.result)
                 {
-                    if (tmp_isect.distance < isect[reflect_count].distance)
+                    if (isect.distance < isects[reflect_count].distance)
                     {
-                        isect[reflect_count] = tmp_isect;
+                        if (0 ==reflect_count)
+                        {
+                            isects[reflect_count] = isect;
+                        }
+                        
                         obj_idx = i;
                     }
                 }
             }
 
+            //if (0 == reflect_count)
+            //{
+            //    isect_back = isects[0];
+            //}
+            //
+            /* なんかこれバグってる？？ */
+            ray = isects[reflect_count].ray;
+            
             reflect_count++;
 
-        } while (0.0f < isect[reflect_count-1].ray.strong && reflect_count < REFLECT_NUM);
+        } while (false != isects[reflect_count-1].result && 
+                 0.0f < isects[reflect_count-1].ray.strong 
+                 && reflect_count < REFLECT_NUM);
+
+        assert(isect_back == isects[0]);
         
         pixel = objs_[obj_idx]->shading(&lights_[0], LIGHT_NUM, 
                                         &objs_[0], OBJECT_NUM, 
-                                        isect[0]);
+                                        isects[0]);
 
         return pixel;
     }

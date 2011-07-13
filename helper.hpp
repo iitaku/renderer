@@ -16,6 +16,12 @@ namespace gtc
             return u.f;
         }
 
+        FUNC_DECL
+        static float make_max(void)
+        {
+            return 0.0;
+        }
+
     } /* namespace helper */
 
 } /* namespace gtc */
