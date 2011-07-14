@@ -143,7 +143,6 @@ public:
     FUNC_DECL 
     virtual Intersect intersect(const Ray& ray) const
     {
-        /* make_max 実装する*/
         return Intersect(true, helper::make_max());
     }
     
