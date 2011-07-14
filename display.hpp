@@ -12,8 +12,6 @@
 #include <GL/glut.h>
 #endif
 
-#include <unistd.h>
-
 #include "performance.hpp"
 #include "element_collection.hpp"
 #include "ray_trace.hpp"
@@ -57,6 +55,8 @@ namespace gtc
                 ss << " transfer : " << transfer_perf.mean_ms() << "ms ";
 #endif
                 glutSetWindowTitle(ss.str().c_str());
+
+                frame_count++;
             }
 
             static void keyboard_callback(unsigned char key , int x , int y)
@@ -117,6 +117,12 @@ namespace gtc
     static void displace_view_kernel(Scene ** d_scene_p, float v1, float v2, float v3)
     {
         (*d_scene_p)->displace_view(Vector(v1, v2, v3));
+    }
+
+    __global__
+    static void displace_light_kernel(Scene ** d_scene_p, float v1, float v2, float v3)
+    {
+        (*d_scene_p)->displace_light(Vector(v1, v2, v3));
     }
 
 #endif
@@ -219,10 +225,10 @@ namespace gtc
             glClear(GL_COLOR_BUFFER_BIT);
 
             glBegin(GL_POLYGON);
-            glTexCoord2f(0, 0); glVertex2f(-0.9 , -0.9);
-            glTexCoord2f(1, 0); glVertex2f(0.9 , -0.9);
-            glTexCoord2f(1, 1); glVertex2f(0.9 , 0.9);
-            glTexCoord2f(0, 1); glVertex2f(-0.9 , 0.9);
+            glTexCoord2f(0, 0); glVertex2f(-0.95 , -0.95);
+            glTexCoord2f(1, 0); glVertex2f(0.95 , -0.95);
+            glTexCoord2f(1, 1); glVertex2f(0.95 , 0.95);
+            glTexCoord2f(0, 1); glVertex2f(-0.95 , 0.95);
             glEnd();
 
             glutSwapBuffers();
@@ -231,21 +237,21 @@ namespace gtc
 
         static void keyboard(unsigned char key, int x, int y)
         {
-            Vector new_view;
+            Vector displace;
             
             switch(key)
             {
                 case 'h':
-                    new_view = Vector(-0.1, 0.0, 0.0);
+                    displace = Vector(-0.1, 0.0, 0.0);
                     break;
                 case 'j':
-                    new_view = Vector(0.0, -0.1, 0.0);
+                    displace = Vector(0.0, -0.1, 0.0);
                     break;
                 case 'k':
-                    new_view = Vector(0.0, +0.1, 0.0);
+                    displace = Vector(0.0, +0.1, 0.0);
                     break;
                 case 'l':
-                    new_view = Vector(+0.1, 0.0, 0.0);
+                    displace = Vector(+0.1, 0.0, 0.0);
                     break;
                 case 'L':
                     std::cout << x << ":" << y << std::endl;
@@ -259,9 +265,11 @@ namespace gtc
                     break;
             }
 #ifdef USE_CUDA
-            displace_view_kernel<<<1, 1>>>(d_scene_p_, new_view.V1(), new_view.V2(), new_view.V3());
+            //displace_view_kernel<<<1, 1>>>(d_scene_p_, displace.V1(), displace.V2(), displace.V3());
+            displace_light_kernel<<<1, 1>>>(d_scene_p_, displace.V1(), displace.V2(), displace.V3());
 #else
-            scene_->displace_view(new_view);
+            //scene_->displace_view(displace);
+            scene_->displace_light(displace);
 #endif
         }
     };

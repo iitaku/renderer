@@ -36,16 +36,6 @@ namespace gtc
                 : v1_(other.v1_), v2_(other.v2_), v3_(other.v3_)
             {} 
 
-            template<typename S>
-            FUNC_DECL
-            ThreeElement<T>& operator=(const ThreeElement<S>& rhs) 
-            {
-                this->v1_ = static_cast<S>(rhs.V1());
-                this->v2_ = static_cast<S>(rhs.V2());
-                this->v3_ = static_cast<S>(rhs.V3());
-                return *this;
-            }
-
             FUNC_DECL
             T V1(void) const { return this->v1_; }
             FUNC_DECL
@@ -67,6 +57,27 @@ namespace gtc
                 {
                     return false;
                 }
+            }
+
+            /* substitute */
+            template<typename S>
+            FUNC_DECL
+            ThreeElement<T>& operator=(const ThreeElement<S>& rhs) 
+            {
+                this->v1_ = static_cast<S>(rhs.V1());
+                this->v2_ = static_cast<S>(rhs.V2());
+                this->v3_ = static_cast<S>(rhs.V3());
+                return *this;
+            }
+            
+            /* add substitute */
+            FUNC_DECL
+            ThreeElement<T>& operator+=(const ThreeElement<T>& rhs) 
+            {
+                this->v1_ += rhs.V1();
+                this->v2_ += rhs.V2();
+                this->v3_ += rhs.V3();
+                return *this;
             }
             
             /* add */
@@ -194,18 +205,7 @@ namespace gtc
             FourElement(const FourElement<T>& other)
                 : v1_(other.v1_), v2_(other.v2_), v3_(other.v3_), v4_(other.v4_)
             {} 
-
-            template<typename S>
-            FUNC_DECL
-            FourElement<T>& operator=(const FourElement<S>& rhs) 
-            {
-                this->v1_ = static_cast<T>(rhs.V1());
-                this->v2_ = static_cast<T>(rhs.V2());
-                this->v3_ = static_cast<T>(rhs.V3());
-                this->v4_ = static_cast<T>(rhs.V4());
-                return *this;
-            }
-
+            
             FUNC_DECL
             T V1(void) const { return this->v1_; }
             FUNC_DECL
@@ -214,7 +214,7 @@ namespace gtc
             T V3(void) const { return this->v3_; }
             FUNC_DECL
             T V4(void) const { return this->v4_; }
-
+ 
             /* compare */
             FUNC_DECL
             bool operator==(const FourElement<T> & rhs) const
@@ -231,6 +231,30 @@ namespace gtc
                     return false;
                 }
             }
+            
+            /* substitute */
+            template<typename S>
+            FUNC_DECL
+            FourElement<T>& operator=(const FourElement<S>& rhs) 
+            {
+                this->v1_ = static_cast<T>(rhs.V1());
+                this->v2_ = static_cast<T>(rhs.V2());
+                this->v3_ = static_cast<T>(rhs.V3());
+                this->v4_ = static_cast<T>(rhs.V4());
+                return *this;
+            }
+
+            /* add substitute */
+            FUNC_DECL
+            FourElement<T>& operator+=(const FourElement<T>& rhs) 
+            {
+                this->v1_ += rhs.V1();
+                this->v2_ += rhs.V2();
+                this->v3_ += rhs.V3();
+                this->v3_ += rhs.V4();
+                return *this;
+            }
+
 
             /* add */
             FUNC_DECL

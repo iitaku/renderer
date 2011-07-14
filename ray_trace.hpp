@@ -7,15 +7,18 @@
 
 #define LIGHT_NUM (1)
 #define OBJECT_NUM (1+5)
-#define REFLECT_NUM (5)
+#define REFLECT_NUM (2)
 
 namespace gtc
 {
 
 typedef RGBA8U RGBA;
+class Object;
 
 static int deb_x;
 static int deb_y;
+
+static int frame_count = 0;
 
 struct Ray
 {
@@ -49,36 +52,34 @@ struct Ray
 
 struct Intersect
 {
-    bool result;
+    bool reflective;
     float distance;
     Coord coord;
     Vector normal;
     Ray ray;
-    const void * obj;
+    const Object * obj;
     
     FUNC_DECL
     Intersect(void)
-        : result(false), distance(helper::make_inf()), coord(), normal(), ray(), obj(NULL) {}
+        : reflective(false), distance(helper::make_inf()), coord(), normal(), ray(), obj(NULL) {}
 
     FUNC_DECL
-    Intersect(bool _result)
-        : result(_result), distance(helper::make_inf()), coord(), normal(), ray(), obj(NULL) {}
+    Intersect(bool _reflective)
+        : reflective(_reflective), distance(helper::make_inf()), coord(), normal(), ray(), obj(NULL) {}
     
     FUNC_DECL
-    Intersect(bool _result, float _distance)
-        : result(_result), distance(_distance), coord(), normal(), ray(), obj(NULL) {}
+    Intersect(bool _reflective, float _distance)
+        : reflective(_reflective), distance(_distance), coord(), normal(), ray(), obj(NULL) {}
     
     FUNC_DECL
-    Intersect(bool _result, float _distance,
-              const Coord & _coord, const Vector & _normal, const Ray & _ray, const void * _obj)
-        : result(_result), distance(_distance), coord(_coord), normal(_normal), ray(_ray), obj(_obj) {}
-        //      const Coord & _coord, const Vector & _normal, const Ray & _ray, const Object * _obj)
-        //: result(_result), distance(_distance), coord(_coord), normal(_normal), ray(_ray), obj(_obj) {}
+    Intersect(bool _reflective, float _distance,
+              const Coord & _coord, const Vector & _normal, const Ray & _ray, const Object * _obj)
+        : reflective(_reflective), distance(_distance), coord(_coord), normal(_normal), ray(_ray), obj(_obj) {}
 
     FUNC_DECL
     bool operator==(const Intersect & rhs)
     {
-        if (this->result == rhs.result && 
+        if (this->reflective == rhs.reflective && 
             this->distance == rhs.distance &&
             this->coord == rhs.coord &&
             this->normal == rhs.normal &&
@@ -143,7 +144,7 @@ public:
     FUNC_DECL 
     virtual Intersect intersect(const Ray& ray) const
     {
-        return Intersect(true, helper::make_max());
+        return Intersect(false, helper::make_max());
     }
     
     FUNC_DECL 
@@ -247,10 +248,10 @@ public:
 
     FUNC_DECL 
     virtual RGBA shading(Coord * lights, unsigned int light_num,
-                          Object ** objs, unsigned int obj_num,
-                          const Intersect & isect) const
+                         Object ** objs, unsigned int obj_num,
+                         const Intersect & isect) const
     { 
-        RGBA pixel;
+        RGBA pixel = material_.color;
 
         for (unsigned int i=0; i<light_num; ++i)
         {
@@ -265,7 +266,7 @@ public:
 
             Intersect my_isect = objs[id_]->intersect(ray);
 
-            for (unsigned int j=1; j<obj_num; ++j)
+            for (unsigned int j=0; j<obj_num; ++j)
             {
                 Intersect other_isect;
                 const Object * obj = objs[j];
@@ -277,7 +278,7 @@ public:
 
                 other_isect = obj->intersect(ray);
                 
-                if (other_isect.result && 
+                if (NULL != other_isect.obj && 
                     other_isect.distance < my_isect.distance)
                 {
                     return Object::invisible_color_;
@@ -380,7 +381,7 @@ public:
 
                 other_isect = obj->intersect(ray);
                 
-                if (other_isect.result && 
+                if (NULL != other_isect.obj && 
                     other_isect.distance < my_isect.distance)
                 {
                     return Object::invisible_color_;
@@ -402,7 +403,9 @@ private:
     int height_;
     
     Coord view_point_;
-    Coord screen_[4];
+    Coord screen_;
+    float screen_width_;
+    float screen_height_;
     
     Coord lights_[LIGHT_NUM];
 
@@ -415,15 +418,14 @@ public:
         : width_(width), height_(height), 
           view_point_(0, 0, 1.0)
     {
-        screen_[0] = Coord(-5.0, -5.0, 0.0);
-        screen_[1] = Coord(+5.0, -5.0, 0.0);
-        screen_[2] = Coord(+5.0, +5.0, 0.0);
-        screen_[3] = Coord(-5.0, +5.0, 0.0);
-        
+        screen_ = Coord(-1.0, -1.0, 0.0);
+        screen_width_ = 2.0;
+        screen_height_ = 2.0;
+                
         lights_[0] = Coord(0.0, 5.0, 1.0);
         
         objs_[0] = new BackGround();
-#if 0
+#if 1
         objs_[1] = new Sphere(1, Material(RGBA(255, 0, 0), 0.5), Coord(-0.7, 0.0, -1.5), 0.7);
         objs_[2] = new Sphere(2, Material(RGBA(0, 255, 0), 0.5), Coord(+0.7, 0.0, -1.5), 0.7);
         objs_[3] = new Sphere(3, Material(RGBA(0, 0, 255), 0.5), Coord(+0.0, 1.2, -1.5), 0.7);
@@ -471,23 +473,22 @@ public:
         deb_y = y;
 #endif
 
-        Coord screen_coord = 
-            Coord(static_cast<float>(x-(width_/2))/static_cast<float>(width_/2),
-                  static_cast<float>(y-(height_/2))/static_cast<float>(height_/2),
+        Coord screen_coord = screen_+
+            Coord(screen_width_*static_cast<float>(x)/static_cast<float>(width_),
+                  screen_height_*static_cast<float>(y)/static_cast<float>(height_),
                   0.0);
 
         Vector direction = screen_coord - view_point_;
         Ray ray(view_point_, direction, 1.0);
         Intersect isects[REFLECT_NUM];
 
-        unsigned int obj_idx = 0;
         RGBA8U pixel;
        
         unsigned int reflect_count = 0;
 
         do
         {
-            for (unsigned int i=1; i<OBJECT_NUM; ++i)
+            for (unsigned int i=0; i<OBJECT_NUM; ++i)
             {
                 Intersect isect;
 
@@ -498,28 +499,35 @@ public:
 
                 isect = objs_[i]->intersect(ray);
                 
-                if (isect.result)
+                if (NULL != isect.obj)
                 {
                     if (isect.distance < isects[reflect_count].distance)
                     {
                         isects[reflect_count] = isect;
-                        obj_idx = i;
                     }
                 }
             }
-            
+
             ray = isects[reflect_count].ray;
             
             reflect_count++;
 
-        } while (false != isects[reflect_count-1].result && 
-                 0.0f < isects[reflect_count-1].ray.strong 
-                 && reflect_count < REFLECT_NUM);
+        } while (NULL != isects[reflect_count-1].obj && 
+                 true == isects[reflect_count-1].reflective &&
+                 0.0f  < isects[reflect_count-1].ray.strong && 
+                 reflect_count < REFLECT_NUM);
         
-        pixel = objs_[obj_idx]->shading(&lights_[0], LIGHT_NUM, 
-                                        &objs_[0], OBJECT_NUM, 
-                                        isects[0]);
-
+        
+        for (unsigned int i=0; i<reflect_count; ++i)
+        {
+            if (NULL != isects[i].obj)
+            {
+                pixel += isects[i].obj->shading(&lights_[0], LIGHT_NUM, 
+                                                &objs_[0], OBJECT_NUM, 
+                                                isects[i]);
+            }
+        }
+       
         return pixel;
     }
 
@@ -528,6 +536,13 @@ public:
     {
         view_point_ = view_point_ + displacement;
     }
+
+    FUNC_DECL
+    void displace_light(const Vector& displacement)
+    {
+        lights_[0] = lights_[0] + displacement;
+    }
+
 };
 
 } /* namespace gtc */
