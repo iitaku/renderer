@@ -93,7 +93,7 @@ public:
 #ifdef WIN32   
         LARGE_INTEGER freq;
         QueryPerformanceFrequency(&freq);
-        return (static_cast<double>(stop_-start_)*1e3f)/static_cast<double>(freq);
+        return (static_cast<double>(stop_.QuadPart-start_.QuadPart)*1e3f)/static_cast<double>(freq.QuadPart);
 #else
         return static_cast<double>((stop_.tv_sec-start_.tv_sec)*1e3f + (stop_.tv_usec-start_.tv_usec)/1e3f);
 #endif
@@ -104,7 +104,7 @@ public:
 #ifdef WIN32   
         LARGE_INTEGER freq;
         QueryPerformanceFrequency(&freq);
-        return (static_cast<double>(stop_-start_)*1e6f)/static_cast<double>(freq);
+        return (static_cast<double>(stop_.QuadPart-start_.QuadPart)*1e6f)/static_cast<double>(freq.QuadPart);
 #else
         return static_cast<double>((stop_.tv_sec-start_.tv_sec)*1e6f + (stop_.tv_usec-start_.tv_usec));
 #endif
