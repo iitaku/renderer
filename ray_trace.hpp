@@ -52,39 +52,35 @@ struct Ray
 
 struct Intersect
 {
+    const Object * obj;
     bool reflective;
     float distance;
     Coord coord;
     Vector normal;
     Ray ray;
-    const Object * obj;
-    
+   
     FUNC_DECL
     Intersect(void)
-        : reflective(false), distance(helper::make_inf()), coord(), normal(), ray(), obj(NULL) {}
-
-    FUNC_DECL
-    Intersect(bool _reflective)
-        : reflective(_reflective), distance(helper::make_inf()), coord(), normal(), ray(), obj(NULL) {}
+        : obj(NULL), reflective(false), distance(helper::make_inf()), coord(), normal(), ray() {}
     
     FUNC_DECL
-    Intersect(bool _reflective, float _distance)
-        : reflective(_reflective), distance(_distance), coord(), normal(), ray(), obj(NULL) {}
+    Intersect(const Object * _obj, bool _reflective, float _distance)
+        : obj(_obj), reflective(_reflective), distance(_distance), coord(), normal(), ray() {}
     
     FUNC_DECL
-    Intersect(bool _reflective, float _distance,
-              const Coord & _coord, const Vector & _normal, const Ray & _ray, const Object * _obj)
-        : reflective(_reflective), distance(_distance), coord(_coord), normal(_normal), ray(_ray), obj(_obj) {}
+    Intersect(const Object * _obj, bool _reflective, float _distance,
+              const Coord & _coord, const Vector & _normal, const Ray & _ray)
+        : obj(_obj), reflective(_reflective), distance(_distance), coord(_coord), normal(_normal), ray(_ray) {}
 
     FUNC_DECL
     bool operator==(const Intersect & rhs)
     {
-        if (this->reflective == rhs.reflective && 
+        if (this->obj == rhs.obj &&
+            this->reflective == rhs.reflective && 
             this->distance == rhs.distance &&
             this->coord == rhs.coord &&
             this->normal == rhs.normal &&
-            this->ray == rhs.ray &&
-            this->obj == rhs.obj )
+            this->ray == rhs.ray)
         {
             return true;
         }
@@ -144,7 +140,7 @@ public:
     FUNC_DECL 
     virtual Intersect intersect(const Ray& ray) const
     {
-        return Intersect(false, helper::make_max());
+        return Intersect(this, false, helper::make_max());
     }
     
     FUNC_DECL 
@@ -152,7 +148,7 @@ public:
                           Object ** objs, unsigned int obj_num,
                           const Intersect & isect) const
     {
-        return material_.color;
+        return invisible_color_;
     }
 };
 
@@ -207,14 +203,14 @@ public:
 
         if (-0.0001f <= deno)
         {
-            return Intersect(false);
+            return Intersect();
         }
         
         float t = nume / deno;
 
         if (t < 0)
         {
-            return Intersect(false);
+            return Intersect();
         }
         
         Coord p = ray.origin + ray.direction * t;
@@ -223,27 +219,27 @@ public:
         Vector d01 = v1_ - v0_;
         if (d0p.cross(d01).dot(normal_) < 0)
         {
-            return Intersect(false);
+            return Intersect();
         }
         
         Vector d1p = p - v1_;
         Vector d12 = v2_ - v1_;
         if (d1p.cross(d12).dot(normal_) < 0)
         {
-            return Intersect(false);
+            return Intersect();
         }
 
         Vector d2p = p - v2_;
         Vector d20 = v0_ - v2_;
         if (d2p.cross(d20).dot(normal_) < 0)
         {
-            return Intersect(false);
+            return Intersect();
         }
         
         float reflet = 2.0f * (ray.direction.dot(normal_));
         Ray new_ray(p, ray.direction - (normal_ * reflet), ray.strong * material_.reflection);
         
-        return Intersect(true, t, p, normal_, new_ray, this);
+        return Intersect(this, true, t, p, normal_, new_ray);
     }
 
     FUNC_DECL 
@@ -328,7 +324,7 @@ public:
 
         if (0 > d) 
         {
-            return Intersect(false);
+            return Intersect();
         }
 
         float tn = -b - sqrtf(d);
@@ -336,7 +332,7 @@ public:
 
         if (tn < 0 && tp < 0)
         {
-            return Intersect(false);
+            return Intersect();
         }
 
         float t = MAX(tn, tp);
@@ -346,7 +342,7 @@ public:
         float reflet = 2.0f * (ray.direction.dot(n));
         Ray new_ray(p, ray.direction - (n * reflet), ray.strong * material_.reflection);
         
-        return Intersect(true, t, p, n, new_ray, this);
+        return Intersect(this, true, t, p, n, new_ray);
     }
     
     FUNC_DECL 
@@ -516,8 +512,28 @@ public:
                  true == isects[reflect_count-1].reflective &&
                  0.0f  < isects[reflect_count-1].ray.strong && 
                  reflect_count < REFLECT_NUM);
+              
         
-        
+        if (0 == frame_count)
+        {
+            std::cout << "(" << std::setw(3) << std::right << x << "," 
+                             << std::setw(3) << std::right << y << ") : ";
+            for (unsigned int i=0; i<reflect_count;++i)
+            {
+                int k;
+                for (k=0; k<OBJECT_NUM; ++k)
+                {
+                    if (objs_[k] == isects[i].obj)
+                    {
+                        break;
+                    }
+                }
+                
+                std::cout << std::setw(3) << std::left << k << " -> ";
+            }
+            std::cout << "eol" << std::endl;
+        }
+
         for (unsigned int i=0; i<reflect_count; ++i)
         {
             if (NULL != isects[i].obj)

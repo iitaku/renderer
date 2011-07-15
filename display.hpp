@@ -245,10 +245,10 @@ namespace gtc
                     displace = Vector(-0.1, 0.0, 0.0);
                     break;
                 case 'j':
-                    displace = Vector(0.0, -0.1, 0.0);
+                    displace = Vector(0.0, 0.0, -0.1);
                     break;
                 case 'k':
-                    displace = Vector(0.0, +0.1, 0.0);
+                    displace = Vector(0.0, 0.0, +0.1);
                     break;
                 case 'l':
                     displace = Vector(+0.1, 0.0, 0.0);
