@@ -335,7 +335,7 @@ public:
             return Intersect();
         }
 
-        float t = MAX(tn, tp);
+        float t = MIN(tn, tp);
         Coord p = ray.origin + ray.direction * t;
         Vector n = (p - center_).normalize();
         
@@ -426,16 +426,16 @@ public:
         objs_[2] = new Sphere(2, Material(RGBA(0, 255, 0), 0.5), Coord(+0.7, 0.0, -1.5), 0.7);
         objs_[3] = new Sphere(3, Material(RGBA(0, 0, 255), 0.5), Coord(+0.0, 1.2, -1.5), 0.7);
 
-        objs_[4] = new Triangle(4, Material(RGBA(255, 255, 255), 1.0),
+        objs_[4] = new Triangle(4, Material(RGBA(255, 255, 255), 0.5),
                                 Coord(-2.0, -2.0, -1.0), 
                                 Coord(-2.0, -2.0, -20.0),
                                 Coord(+2.0, -2.0, -1.0));
 
-        objs_[5] = new Triangle(5, Material(RGBA(255, 255, 255), 1.0),
+        objs_[5] = new Triangle(5, Material(RGBA(255, 255, 255), 0.5),
                                 Coord(-2.0, -2.0, -20.0), 
                                 Coord(+2.0, -2.0, -20.0),
                                 Coord(+2.0, -2.0, -1.0));
-#else
+#elif 0
         objs_[1] = new Triangle(1, Material(RGBA(255, 255, 255), 1.0), 
                                 Coord(-20.0, -20.0, -1.0),
                                 Coord(+20.0, -20.0, -1.0),
@@ -444,6 +444,13 @@ public:
                                 Coord(-20.0, -20.0, -1.0),
                                 Coord(-20.0, +20.0, -1.0),
                                 Coord(+20.0, +20.0, -1.0));
+        objs_[3] = NULL;
+        objs_[4] = NULL;
+        objs_[5] = NULL;
+#else
+        objs_[1] = new Sphere(1, Material(RGBA(255, 255, 0), 0.5), 
+                              Coord(0.0, 0.0, -3.0), 1.0);
+        objs_[2] = NULL;
         objs_[3] = NULL;
         objs_[4] = NULL;
         objs_[5] = NULL;
@@ -493,6 +500,11 @@ public:
                     continue;
                 }
 
+                if (0 < reflect_count && isects[reflect_count-1].obj == objs_[i])
+                {
+                    continue;
+                }
+
                 isect = objs_[i]->intersect(ray);
                 
                 if (NULL != isect.obj)
@@ -505,7 +517,10 @@ public:
             }
 
             ray = isects[reflect_count].ray;
-            
+ 
+            //Vector deb_vec = Coord(-0.7, 0.0, -1.5) - ray.origin;
+            //float dist = deb_vec.self_dot();
+                       
             reflect_count++;
 
         } while (NULL != isects[reflect_count-1].obj && 

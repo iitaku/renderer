@@ -205,8 +205,10 @@ namespace gtc
             perf_transfer.stop();
 #else
             for (int y=0; y<height_; ++y)
+            //for (int y=256; y<height_; ++y)
             {
                 for (int x=0; x<width_; ++x)
+                //for (int x=256; x<width_; ++x)
                 {
                     image_[y*width_+x] = scene_->render(x, y);
                 }
