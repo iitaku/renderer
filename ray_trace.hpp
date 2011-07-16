@@ -7,7 +7,7 @@
 
 #define LIGHT_NUM (1)
 #define OBJECT_NUM (1+5)
-#define REFLECT_NUM (2)
+#define REFLECT_NUM (5)
 
 namespace gtc
 {
@@ -53,7 +53,7 @@ struct Ray
 struct Intersect
 {
     const Object * obj;
-    bool reflective;
+    float reflection;
     float distance;
     Coord coord;
     Vector normal;
@@ -61,22 +61,22 @@ struct Intersect
    
     FUNC_DECL
     Intersect(void)
-        : obj(NULL), reflective(false), distance(helper::make_inf()), coord(), normal(), ray() {}
+        : obj(NULL), reflection(0.0f), distance(helper::make_inf()), coord(), normal(), ray() {}
     
     FUNC_DECL
-    Intersect(const Object * _obj, bool _reflective, float _distance)
-        : obj(_obj), reflective(_reflective), distance(_distance), coord(), normal(), ray() {}
+    Intersect(const Object * _obj, float _reflection, float _distance)
+        : obj(_obj), reflection(_reflection), distance(_distance), coord(), normal(), ray() {}
     
     FUNC_DECL
-    Intersect(const Object * _obj, bool _reflective, float _distance,
+    Intersect(const Object * _obj, float _reflection, float _distance,
               const Coord & _coord, const Vector & _normal, const Ray & _ray)
-        : obj(_obj), reflective(_reflective), distance(_distance), coord(_coord), normal(_normal), ray(_ray) {}
+        : obj(_obj), reflection(_reflection), distance(_distance), coord(_coord), normal(_normal), ray(_ray) {}
 
     FUNC_DECL
     bool operator==(const Intersect & rhs)
     {
         if (this->obj == rhs.obj &&
-            this->reflective == rhs.reflective && 
+            this->reflection == rhs.reflection && 
             this->distance == rhs.distance &&
             this->coord == rhs.coord &&
             this->normal == rhs.normal &&
@@ -140,7 +140,7 @@ public:
     FUNC_DECL 
     virtual Intersect intersect(const Ray& ray) const
     {
-        return Intersect(this, false, helper::make_max());
+        return Intersect(this, 0.0f, helper::make_max());
     }
     
     FUNC_DECL 
@@ -239,7 +239,7 @@ public:
         float reflet = 2.0f * (ray.direction.dot(normal_));
         Ray new_ray(p, ray.direction - (normal_ * reflet), ray.strong * material_.reflection);
         
-        return Intersect(this, true, t, p, normal_, new_ray);
+        return Intersect(this, ray.strong, t, p, normal_, new_ray);
     }
 
     FUNC_DECL 
@@ -282,7 +282,7 @@ public:
             }
             
             float lambert = fabs(ray.direction.dot(isect.normal));
-            pixel = material_.color * lambert * ray.strong;
+            pixel = material_.color * lambert * isect.reflection;
         }
 
         return pixel;
@@ -342,7 +342,7 @@ public:
         float reflet = 2.0f * (ray.direction.dot(n));
         Ray new_ray(p, ray.direction - (n * reflet), ray.strong * material_.reflection);
         
-        return Intersect(this, true, t, p, n, new_ray);
+        return Intersect(this, ray.strong, t, p, n, new_ray);
     }
     
     FUNC_DECL 
@@ -385,7 +385,7 @@ public:
             }
 
             float lambert = fabs(ray.direction.dot(isect.normal));
-            pixel = material_.color * lambert * ray.strong;
+            pixel = material_.color * lambert * isect.reflection;
         }
 
         return pixel;
@@ -521,8 +521,7 @@ public:
             reflect_count++;
 
         } while (NULL != isects[reflect_count-1].obj && 
-                 true == isects[reflect_count-1].reflective &&
-                 0.0f  < isects[reflect_count-1].ray.strong && 
+                 0.0f < isects[reflect_count-1].reflection &&
                  reflect_count < REFLECT_NUM);
               
         
