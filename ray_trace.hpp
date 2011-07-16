@@ -282,7 +282,7 @@ public:
             }
             
             float lambert = fabs(ray.direction.dot(isect.normal));
-            pixel = material_.color * lambert;
+            pixel = material_.color * lambert * ray.strong;
         }
 
         return pixel;
@@ -385,7 +385,7 @@ public:
             }
 
             float lambert = fabs(ray.direction.dot(isect.normal));
-            pixel = material_.color * lambert;
+            pixel = material_.color * lambert * ray.strong;
         }
 
         return pixel;
@@ -427,14 +427,14 @@ public:
         objs_[3] = new Sphere(3, Material(RGBA(0, 0, 255), 0.5), Coord(+0.0, 1.2, -1.5), 0.7);
 
         objs_[4] = new Triangle(4, Material(RGBA(255, 255, 255), 0.5),
-                                Coord(-2.0, -2.0, -1.0), 
-                                Coord(-2.0, -2.0, -20.0),
-                                Coord(+2.0, -2.0, -1.0));
+                                Coord(-4.0, -2.0, -1.0), 
+                                Coord(-4.0, -2.0, -20.0),
+                                Coord(+4.0, -2.0, -1.0));
 
         objs_[5] = new Triangle(5, Material(RGBA(255, 255, 255), 0.5),
-                                Coord(-2.0, -2.0, -20.0), 
-                                Coord(+2.0, -2.0, -20.0),
-                                Coord(+2.0, -2.0, -1.0));
+                                Coord(-4.0, -2.0, -20.0), 
+                                Coord(+4.0, -2.0, -20.0),
+                                Coord(+4.0, -2.0, -1.0));
 #elif 0
         objs_[1] = new Triangle(1, Material(RGBA(255, 255, 255), 1.0), 
                                 Coord(-20.0, -20.0, -1.0),
@@ -517,9 +517,6 @@ public:
             }
 
             ray = isects[reflect_count].ray;
- 
-            //Vector deb_vec = Coord(-0.7, 0.0, -1.5) - ray.origin;
-            //float dist = deb_vec.self_dot();
                        
             reflect_count++;
 
