@@ -6,7 +6,7 @@
 #include "porting.hpp"
 
 #define LIGHT_NUM (1)
-#define OBJECT_NUM (1+5)
+#define OBJECT_NUM (1+7)
 #define REFLECT_NUM (5)
 
 namespace gtc
@@ -422,19 +422,31 @@ public:
         
         objs_[0] = new BackGround();
 #if 1
-        objs_[1] = new Sphere(1, Material(RGBA(255, 0, 0), 0.5), Coord(-0.7, 0.0, -1.5), 0.7);
-        objs_[2] = new Sphere(2, Material(RGBA(0, 255, 0), 0.5), Coord(+0.7, 0.0, -1.5), 0.7);
-        objs_[3] = new Sphere(3, Material(RGBA(0, 0, 255), 0.5), Coord(+0.0, 1.2, -1.5), 0.7);
+        objs_[1] = new Sphere(1, Material(RGBA(255, 0, 0), 0.2), Coord(-0.7, -0.6, -1.5), 0.7);
+        objs_[2] = new Sphere(2, Material(RGBA(0, 255, 0), 0.2), Coord(+0.7, -0.6, -1.5), 0.7);
+        objs_[3] = new Sphere(3, Material(RGBA(0, 0, 255), 0.2), Coord(+0.0, +0.6, -1.5), 0.7);
 
-        objs_[4] = new Triangle(4, Material(RGBA(255, 255, 255), 0.5),
-                                Coord(-4.0, -2.0, -1.0), 
-                                Coord(-4.0, -2.0, -20.0),
-                                Coord(+4.0, -2.0, -1.0));
+        objs_[4] = new Triangle(4, Material(RGBA(255, 255, 255), 0.2),
+                                Coord(-4.0, -4.0, -1.0), 
+                                Coord(-4.0, -4.0, -5.0),
+                                Coord(+4.0, -4.0, -1.0));
 
-        objs_[5] = new Triangle(5, Material(RGBA(255, 255, 255), 0.5),
-                                Coord(-4.0, -2.0, -20.0), 
-                                Coord(+4.0, -2.0, -20.0),
-                                Coord(+4.0, -2.0, -1.0));
+        objs_[5] = new Triangle(5, Material(RGBA(255, 255, 255), 0.2),
+                                Coord(-4.0, -4.0, -5.0), 
+                                Coord(+4.0, -4.0, -5.0),
+                                Coord(+4.0, -4.0, -1.0));
+
+        objs_[6] = new Triangle(6, Material(RGBA(255, 255, 255), 0.2),
+                                Coord(-4.0, -4.0, -5.0), 
+                                Coord(-4.0, +4.0, -5.0),
+                                Coord(+4.0, -4.0, -5.0));
+
+        objs_[7] = new Triangle(7, Material(RGBA(255, 255, 255), 0.2),
+                                Coord(+4.0, +4.0, -5.0), 
+                                Coord(+4.0, -4.0, -5.0),
+                                Coord(-4.0, +4.0, -5.0));
+
+
 #elif 0
         objs_[1] = new Triangle(1, Material(RGBA(255, 255, 255), 1.0), 
                                 Coord(-20.0, -20.0, -1.0),
@@ -523,27 +535,26 @@ public:
         } while (NULL != isects[reflect_count-1].obj && 
                  0.0f < isects[reflect_count-1].reflection &&
                  reflect_count < REFLECT_NUM);
-              
         
-        if (0 == frame_count)
-        {
-            std::cout << "(" << std::setw(3) << std::right << x << "," 
-                             << std::setw(3) << std::right << y << ") : ";
-            for (unsigned int i=0; i<reflect_count;++i)
-            {
-                int k;
-                for (k=0; k<OBJECT_NUM; ++k)
-                {
-                    if (objs_[k] == isects[i].obj)
-                    {
-                        break;
-                    }
-                }
-                
-                std::cout << std::setw(3) << std::left << k << " -> ";
-            }
-            std::cout << "eol" << std::endl;
-        }
+        //if (0 == frame_count)
+        //{
+        //    std::cout << "(" << std::setw(3) << std::right << x << "," 
+        //                     << std::setw(3) << std::right << y << ") : ";
+        //    for (unsigned int i=0; i<reflect_count;++i)
+        //    {
+        //        int k;
+        //        for (k=0; k<OBJECT_NUM; ++k)
+        //        {
+        //            if (objs_[k] == isects[i].obj)
+        //            {
+        //                break;
+        //            }
+        //        }
+        //        
+        //        std::cout << std::setw(3) << std::left << k << " -> ";
+        //    }
+        //    std::cout << "eol" << std::endl;
+        //}
 
         for (unsigned int i=0; i<reflect_count; ++i)
         {
