@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "porting.hpp"
+#include "helper.hpp"
 
 #define SQ(val) (val*val)
 #define MAX(val1, val2) (val1<val2 ? val2 : val1)
@@ -133,7 +134,16 @@ namespace gtc
                                        static_cast<T>(static_cast<S>(this->v2_)*s), 
                                        static_cast<T>(static_cast<S>(this->v3_)*s));
             }
-
+            
+            /* saturating add */
+            FUNC_DECL
+            ThreeElement<T> add_sat(const ThreeElement<T>& rhs) const
+            {
+                return ThreeElement<T>(helper::add_sat<T>(this->v1_, rhs.v1_),
+                                       helper::add_sat<T>(this->v2_, rhs.v2_),
+                                       helper::add_sat<T>(this->v3_, rhs.v3_));
+            }
+            
             /* dot product */
             FUNC_DECL
             float dot(const ThreeElement<T>& rhs) const
@@ -314,6 +324,16 @@ namespace gtc
                                       static_cast<T>(static_cast<S>(this->v2_)*s), 
                                       static_cast<T>(static_cast<S>(this->v3_)*s),
                                       static_cast<T>(static_cast<S>(this->v4_)*s));
+            }
+ 
+            /* saturating add */
+            FUNC_DECL
+            FourElement<T> add_sat(const FourElement<T>& rhs) const
+            {
+                return FourElement<T>(helper::add_sat<T>(this->v1_, rhs.v1_),
+                                      helper::add_sat<T>(this->v2_, rhs.v2_),
+                                      helper::add_sat<T>(this->v3_, rhs.v3_),
+                                      helper::add_sat<T>(this->v4_, rhs.v4_));
             }
 
             /* dot product */
