@@ -422,69 +422,69 @@ public:
         
         objs_[0] = new BackGround();
 #if 1
-        objs_[1] = new Sphere(1, Material(RGBA(255, 255, 0), 0.2), 
-                              Coord(-0.7, -0.6, -3.0), 0.7);
+        objs_[1] = new Sphere(1, Material(RGBA(255, 255, 0), 0.2f), 
+                              Coord(-0.7f, -0.6f, -3.0f), 0.7f);
 
-        objs_[2] = new Sphere(2, Material(RGBA(0, 255, 255), 0.2), 
-                              Coord(+0.7, -0.6, -3.0), 0.7);
+        objs_[2] = new Sphere(2, Material(RGBA(0, 255, 255), 0.2f), 
+                              Coord(+0.7f, -0.6f, -3.0f), 0.7f);
         
-        objs_[3] = new Sphere(3, Material(RGBA(255, 255, 255), 1.0), 
-                              Coord(+0.0, +0.6, -3.0), 0.7);
+        objs_[3] = new Sphere(3, Material(RGBA(255, 255, 255), 1.0f), 
+                              Coord(+0.0f, +0.6f, -3.0f), 0.7f);
 
         /* Floor */
-        objs_[4] = new Triangle(4, Material(RGBA(128, 128, 128), 0.2),
-                                Coord(-4.0, -4.0, -1.0), 
-                                Coord(-4.0, -4.0, -8.0),
-                                Coord(+4.0, -4.0, -1.0));
+        objs_[4] = new Triangle(4, Material(RGBA(128, 128, 128), 0.2f),
+                                Coord(-4.0f, -4.0f, +8.0f), 
+                                Coord(-4.0f, -4.0f, -8.0f),
+                                Coord(+4.0f, -4.0f, +8.0f));
 
-        objs_[5] = new Triangle(5, Material(RGBA(128, 128, 128), 0.2),
-                                Coord(-4.0, -4.0, -8.0), 
-                                Coord(+4.0, -4.0, -8.0),
-                                Coord(+4.0, -4.0, -1.0));
+        objs_[5] = new Triangle(5, Material(RGBA(128, 128, 128), 0.2f),
+                                Coord(-4.0f, -4.0f, -8.0f), 
+                                Coord(+4.0f, -4.0f, -8.0f),
+                                Coord(+4.0f, -4.0f, +8.0f));
 
         /* Loof */
-        objs_[6] = new Triangle(6, Material(RGBA(64, 64, 64), 0.2),
-                                Coord(-4.0, +4.0, -8.0), 
-                                Coord(-4.0, +4.0, -1.0),
-                                Coord(+4.0, +4.0, -1.0));
+        objs_[6] = new Triangle(6, Material(RGBA(64, 64, 64), 0.2f),
+                                Coord(-4.0f, +4.0f, -8.0f), 
+                                Coord(-4.0f, +4.0f, +8.0f),
+                                Coord(+4.0f, +4.0f, +8.0f));
 
-        objs_[7] = new Triangle(7, Material(RGBA(64, 64, 64), 0.2),
-                                Coord(+4.0, +4.0, -1.0), 
-                                Coord(+4.0, +4.0, -8.0),
-                                Coord(-4.0, +4.0, -1.0));
+        objs_[7] = new Triangle(7, Material(RGBA(64, 64, 64), 0.2f),
+                                Coord(+4.0f, +4.0f, +8.0f), 
+                                Coord(+4.0f, +4.0f, -8.0f),
+                                Coord(-4.0f, +4.0f, +8.0f));
  
         /* Front Wall */
-        objs_[8] = new Triangle(8, Material(RGBA(255, 255, 255), 0.2),
-                                Coord(-4.0, -4.0, -8.0), 
-                                Coord(-4.0, +4.0, -8.0),
-                                Coord(+4.0, -4.0, -8.0));
+        objs_[8] = new Triangle(8, Material(RGBA(255, 255, 255), 0.2f),
+                                Coord(-4.0f, -4.0f, -8.0f), 
+                                Coord(-4.0f, +4.0f, -8.0f),
+                                Coord(+4.0f, -4.0f, -8.0f));
 
-        objs_[9] = new Triangle(9, Material(RGBA(255, 255, 255), 0.2),
-                                Coord(+4.0, +4.0, -8.0), 
-                                Coord(+4.0, -4.0, -8.0),
-                                Coord(-4.0, +4.0, -8.0));
+        objs_[9] = new Triangle(9, Material(RGBA(255, 255, 255), 0.2f),
+                                Coord(+4.0f, +4.0f, -8.0f), 
+                                Coord(+4.0f, -4.0f, -8.0f),
+                                Coord(-4.0f, +4.0f, -8.0f));
 
         /* Left Wall */
-        objs_[10] = new Triangle(10, Material(RGBA(255, 0, 0), 0.2),
-                                 Coord(-4.0, -4.0, -1.0), 
-                                 Coord(-4.0, +4.0, -1.0),
-                                 Coord(-4.0, -4.0, -8.0));
+        objs_[10] = new Triangle(10, Material(RGBA(255, 0, 0), 0.2f),
+                                 Coord(-4.0f, -4.0f, +8.0f), 
+                                 Coord(-4.0f, +4.0f, +8.0f),
+                                 Coord(-4.0f, -4.0f, -8.0f));
 
-        objs_[11] = new Triangle(11, Material(RGBA(255, 0, 0), 0.2),
-                                 Coord(-4.0, +4.0, -8.0), 
-                                 Coord(-4.0, -4.0, -8.0),
-                                 Coord(-4.0, +4.0, -1.0));
+        objs_[11] = new Triangle(11, Material(RGBA(255, 0, 0), 0.2f),
+                                 Coord(-4.0f, +4.0f, -8.0f), 
+                                 Coord(-4.0f, -4.0f, -8.0f),
+                                 Coord(-4.0f, +4.0f, +8.0f));
         
         /* Right Wall */
-        objs_[12] = new Triangle(12, Material(RGBA(0, 255, 0), 0.2),
-                                Coord(+4.0, -4.0, -8.0), 
-                                Coord(+4.0, +4.0, -8.0),
-                                Coord(+4.0, -4.0, -1.0));
+        objs_[12] = new Triangle(12, Material(RGBA(0, 255, 0), 0.2f),
+                                Coord(+4.0f, -4.0f, -8.0f), 
+                                Coord(+4.0f, +4.0f, -8.0f),
+                                Coord(+4.0f, -4.0f, +8.0f));
 
-        objs_[13] = new Triangle(13, Material(RGBA(0, 255, 0), 0.2),
-                                Coord(+4.0, +4.0, -1.0), 
-                                Coord(+4.0, -4.0, -1.0),
-                                Coord(+4.0, +4.0, -8.0));
+        objs_[13] = new Triangle(13, Material(RGBA(0, 255, 0), 0.2f),
+                                Coord(+4.0f, +4.0f, +8.0f), 
+                                Coord(+4.0f, -4.0f, +8.0f),
+                                Coord(+4.0f, +4.0f, -8.0f));
 
 
 #elif 0
